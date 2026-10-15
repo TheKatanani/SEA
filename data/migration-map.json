@@ -1,0 +1,576 @@
+{
+  "metadata": {
+    "project": "Saudi Entertainment Academy (SEA) Website Migration",
+    "from_platform": "Wix (ar.saea.sa / www.saea.sa)",
+    "to_platform": "Next.js (App Router, Tailwind CSS, TypeScript)",
+    "figma_design_url": "https://www.figma.com/design/oyrfnuvWFUEoo75Kpem2Dh/Untitled?node-id=0-1",
+    "date": "2026-10-14",
+    "total_wix_urls_audited": 102
+  },
+  "url_redirects_and_routes": [
+    {
+      "legacy": "/",
+      "next": "/",
+      "template": "Home",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-home",
+      "next": "/",
+      "template": "Home (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/about",
+      "next": "/about",
+      "template": "About Us",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-about-us",
+      "next": "/about",
+      "template": "About Us (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/programs",
+      "next": "/programs",
+      "template": "Programs Directory",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-programs",
+      "next": "/programs",
+      "template": "Programs Directory (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-programs-1",
+      "next": "/programs",
+      "template": "Programs Directory (Copy 1)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-programs-2",
+      "next": "/programs",
+      "template": "Programs Directory (Copy 2)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/our-programs",
+      "next": "/programs",
+      "template": "Our Programs",
+      "status": "Canonical",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-our-programs",
+      "next": "/programs",
+      "template": "Our Programs (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/entertainment-diplomas",
+      "next": "/admission",
+      "template": "Admission & Diplomas",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-entertainment-diplomas",
+      "next": "/admission",
+      "template": "Admission (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/mice-diplomas",
+      "next": "/programs/mice-management",
+      "template": "MICE Diploma",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-mice",
+      "next": "/programs/mice-management",
+      "template": "MICE Diploma (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/trainee-admission",
+      "next": "/apply",
+      "template": "Trainee Application",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/apply-now",
+      "next": "/apply",
+      "template": "Apply Now",
+      "status": "Canonical",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-apply-now",
+      "next": "/apply",
+      "template": "Apply Now (Copy)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/company-registration",
+      "next": "/employers",
+      "template": "Company Registration",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/company",
+      "next": "/employers",
+      "template": "Company (Old)",
+      "status": "Canonical",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/gallery",
+      "next": "/gallery",
+      "template": "Media Gallery",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/académie-paris",
+      "next": "/accreditation/academie-paris",
+      "template": "Académie de Paris",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/our-operator",
+      "next": "/partners/cote-dazur",
+      "template": "Université Côte d'Azur",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/studentjourney",
+      "next": "/student-journey",
+      "template": "Student Journey",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/academic-honesty-policy",
+      "next": "/policies/academic-honesty",
+      "template": "Academic Honesty",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/students-attendance-policy",
+      "next": "/policies/attendance",
+      "template": "Attendance Policy",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/complaints-procedure",
+      "next": "/policies/complaints",
+      "template": "Complaints Procedure",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/intellectual-copyrights-guidelines",
+      "next": "/policies/intellectual-property",
+      "template": "IP Guidelines",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/privacy-policy",
+      "next": "/policies/privacy",
+      "template": "Privacy Policy",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/policy",
+      "next": "/policies",
+      "template": "General Policies Hub",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/technical-support-service-portal",
+      "next": "/support",
+      "template": "Support Portal",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/trainee-user-guide",
+      "next": "/support/trainee-guide",
+      "template": "Trainee User Guide",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/trainer-user-guide",
+      "next": "/support/trainer-guide",
+      "template": "Trainer User Guide",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/e-learning-guidance",
+      "next": "/support/e-learning",
+      "template": "E-Learning Guidance",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/ar-registrationdiplomaofthefuture",
+      "next": "/campaigns/future-diploma",
+      "template": "Future Diploma Campaign",
+      "status": "Canonical",
+      "redirect_301": false
+    },
+    {
+      "legacy": "/copy-of-last-news",
+      "next": "/news",
+      "template": "News Hub (Placeholder)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-last-news-1",
+      "next": "/academic-calendar",
+      "template": "Academic Calendar (Placeholder)",
+      "status": "Duplicate",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-ride-technician",
+      "next": "/programs/ride-technician",
+      "template": "Course: Ride Technician",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-management-center",
+      "next": "/programs/entertainment-centers-management",
+      "template": "Course: Centers Management",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-center-design",
+      "next": "/programs/entertainment-centers-design",
+      "template": "Course: Centers Design",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-crowd-and-safety",
+      "next": "/programs/crowd-management",
+      "template": "Course: Crowd Safety",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-crowd-management-1",
+      "next": "/programs/crowd-management",
+      "template": "Course: Crowd Management",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-project-management-2",
+      "next": "/programs/entertainment-project-management",
+      "template": "Course: Project Management",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-center-maintenance",
+      "next": "/programs/entertainment-centers-maintenance",
+      "template": "Course: Maintenance",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-center-safety",
+      "next": "/programs/entertainment-centers-safety",
+      "template": "Course: Center Safety",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-center-safety-1",
+      "next": "/programs/entertainment-centers-safety",
+      "template": "Course: Center Safety 1",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-destination-man",
+      "next": "/programs/entertainment-destination-management",
+      "template": "Course: Destination Mgmt",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-entertainment-experience-design-2",
+      "next": "/programs/entertainment-experience-design",
+      "template": "Course: Experience Design",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-health-safety-and-operation",
+      "next": "/programs/health-safety-and-operation",
+      "template": "Course: Health Safety Ops",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-sales-6",
+      "next": "/programs/video-games-developer",
+      "template": "Course: Games Dev / Sales",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-centert-safety-6",
+      "next": "/programs/entertainment-centers-safety",
+      "template": "Course: Safety 6",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    },
+    {
+      "legacy": "/copy-of-live-events-manageement",
+      "next": "/programs/live-events-management",
+      "template": "Course: Live Events",
+      "status": "Duplicate/Legacy Track",
+      "redirect_301": true
+    }
+  ],
+  "forms_and_ctas": [
+    {
+      "element": "زر التقديم الرئيسي (Hero & Program Cards)",
+      "label_ar": "للتسجيل في الدبلوم / قدم الآن",
+      "label_en": "Diploma Registration / Apply Now",
+      "current_action": "يفتح رابط Linktree خارجي (https://linktr.ee/sea_ksa)",
+      "next_action_recommended": "فتح نموذج تقديم المتدرب المدمج (/apply) داخل Next.js مباشرة دون مغادرة الموقع",
+      "page_presence": "الصفحة الرئيسية، صفحة البرامج، صفحات تفاصيل الدبلومات"
+    },
+    {
+      "element": "زر تسجيل الشركات الموظفة",
+      "label_ar": "تسجيل الشركات الموظفة",
+      "label_en": "Employer companies",
+      "current_action": "يفتح صفحة /company-registration أو /company",
+      "next_action_recommended": "فتح مسار /employers في Next.js المتضمن نموذج تسجيل المنشآت",
+      "page_presence": "الهيدر والصفحة الرئيسية"
+    },
+    {
+      "element": "التقديم على الوظائف الشاغرة",
+      "label_ar": "للتقديم على الوظائف المتاحة",
+      "label_en": "To apply for jobs",
+      "current_action": "رابط بريدي مباشر (mailto:recruitment@saea.sa)",
+      "next_action_recommended": "إنشاء صفحة توظيف مخصصة (/careers) بنموذج رفع سيرة ذاتية أو الإبقاء على mailto للنسخة الأولية",
+      "page_presence": "الفوتر في جميع الصفحات"
+    },
+    {
+      "element": "نموذج التسجيل السريع",
+      "fields_count": 7,
+      "current_action": "Wix Form Submit",
+      "next_action_recommended": "Server Action / API Route (POST /api/leads/quick-register)",
+      "page_presence": "الصفحة الرئيسية"
+    },
+    {
+      "element": "نموذج تقديم طلب متدرب",
+      "fields_count": 7,
+      "current_action": "Wix Form Submit",
+      "next_action_recommended": "Multi-step form component في مسار /apply",
+      "page_presence": "/trainee-admission"
+    },
+    {
+      "element": "نموذج تسجيل الشركات B2B",
+      "fields_count": 9,
+      "current_action": "Wix Form Submit",
+      "next_action_recommended": "B2B intake form component في مسار /employers",
+      "page_presence": "/company-registration"
+    },
+    {
+      "element": "نموذج اتصل بنا",
+      "fields_count": 5,
+      "current_action": "Wix Form Submit",
+      "next_action_recommended": "Contact form component في مسار /contact وفوتر الموقع",
+      "page_presence": "الفوتر وصفحة التواصل"
+    }
+  ],
+  "brand_assets": {
+    "logos": [
+      {
+        "name": "SEA White Logo with Slogan",
+        "url": "https://static.wixstatic.com/media/c94e6f_edf451f7ca26469aa33d182bbe7b84e6~mv2.png/v1/fill/w_1194,h_209,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/SLGN%20WHITE.png",
+        "dimensions": "1194x209",
+        "usage": "Main Header & Footer on Dark Backgrounds",
+        "rights": "Official SEA Visual Identity"
+      },
+      {
+        "name": "GEA Logo (General Entertainment Authority)",
+        "url": "https://static.wixstatic.com/media/6a3abf_514cd15c083940ce90e4c3c3631ee889~mv2.png/v1/fill/w_80,h_46,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/GEA_PrimaryVerticalLogo_ForUseOnLight_RGB-white.png",
+        "dimensions": "80x46",
+        "usage": "Strategic Partner Ribbon",
+        "rights": "GEA Official Trademark"
+      },
+      {
+        "name": "HRDF / Hadaf Logo",
+        "url": "https://static.wixstatic.com/media/c94e6f_aa2395dc916a47bf9f8d237c78958229~mv2.png/v1/fill/w_124,h_57,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/HRDF%20new%20logo%20white.png",
+        "dimensions": "124x57",
+        "usage": "Government Sponsor Ribbon",
+        "rights": "HRDF Official Trademark"
+      },
+      {
+        "name": "Colleges of Excellence (CoE) Logo",
+        "url": "https://static.wixstatic.com/media/c94e6f_e7f5692306914e4c9c86ad61e98e519e~mv2.png/v1/fill/w_111,h_57,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/celogow.png",
+        "dimensions": "111x57",
+        "usage": "Institutional Partner Ribbon",
+        "rights": "CoE Official Trademark"
+      },
+      {
+        "name": "Académie de Paris Logo",
+        "url": "https://static.wixstatic.com/media/c94e6f_57edf092453141fe9dc53b07d048e3d2~mv2.png/v1/fill/w_149,h_143,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Paris%20academy%20logo%20white.png",
+        "dimensions": "149x143",
+        "usage": "International Academic Partner Page & Ribbons",
+        "rights": "Académie de Paris Accreditation Badge"
+      },
+      {
+        "name": "Université Côte d'Azur Logo",
+        "url": "https://static.wixstatic.com/media/c94e6f_b2eebcedb9bc4e88996a848dc5c10e3b~mv2.png/v1/fill/w_180,h_46,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1200px-Logo_universit%C3%A9_c%C3%B4te_azur%20white.png",
+        "dimensions": "180x46",
+        "usage": "International University Operator",
+        "rights": "Université Côte d'Azur Trademark"
+      }
+    ],
+    "typography": {
+      "primary_arabic_font": "Janna LT (janna-lt-w20-regular), IBM Plex Sans Arabic, or Tajawal",
+      "primary_english_heading_font": "Syne / Montserrat",
+      "primary_english_body_font": "Avenir LT / Questrial / Inter",
+      "figma_detected_font": "Apercu / Plus Jakarta Sans / Inter"
+    },
+    "color_palette": {
+      "primary_purple": "#540FA5",
+      "secondary_lavender": "#B587EC",
+      "dark_background": "#0B0612",
+      "card_surface": "#180C26",
+      "light_background": "#FFFFFF",
+      "text_light": "#FFFFFF",
+      "text_dark": "#0F172A"
+    }
+  },
+  "figma_coverage_matrix": [
+    {
+      "screen": "الصفحة الرئيسية (Home)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "موجودة في فيغما بنسختين وتوافق محتوى البطل والشركاء مع تحسين بصري هائل"
+    },
+    {
+      "screen": "من نحن (About Us)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "موجودة في فيغما برؤية وقيم ومسيرة الأكاديمية"
+    },
+    {
+      "screen": "دليل البرامج (Programs Hub)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "موجودة في فيغما مع فلاتر الدبلومات والدورات القصيرة"
+    },
+    {
+      "screen": "تفاصيل الدبلوم (Program Detail)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "موجودة في فيغما ببطاقة تقديم وتبويبات المحاور والفرص"
+    },
+    {
+      "screen": "القبول والتسجيل (Admissions)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "موجودة كخطوات تقديم وشروط 11 معتمدة"
+    },
+    {
+      "screen": "نموذج المتدرب (Apply Form)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة كنموذج إدخال متعدد المراحل"
+    },
+    {
+      "screen": "الشركات والتوظيف (Employers)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة بنموذج بيانات المنشأة ومزايا الشراكة"
+    },
+    {
+      "screen": "المعرض والوسائط (Gallery)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة كشبكة وسائط وتبويبات صور وفيديو"
+    },
+    {
+      "screen": "الشركاء والاعتمادات (Partners)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة مع بروفايل أكاديمية باريس وهيئة الترفيه"
+    },
+    {
+      "screen": "اتصل بنا (Contact Us)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة مع الخريطة وبيانات فرع الربوة"
+    },
+    {
+      "screen": "السياسات العامة (Policies)",
+      "in_figma": true,
+      "in_wix": true,
+      "notes": "مصممة كقالب نصي رسمي مع قائمة جانبية"
+    },
+    {
+      "screen": "صفحة الخطأ 404",
+      "in_figma": true,
+      "in_wix": false,
+      "notes": "مصممة في فيغما كإضافة ممتازة غير متوفرة في موقع Wix الحالي"
+    },
+    {
+      "screen": "التقويم الأكاديمي (Academic Calendar)",
+      "in_figma": false,
+      "in_wix": true,
+      "notes": "موجود كعنصر منيو في Wix ولكن بمحتوى مكرر؛ غير مصمم بشكل منفصل في فيغما"
+    },
+    {
+      "screen": "الأسئلة الشائعة (FAQs)",
+      "in_figma": true,
+      "in_wix": false,
+      "notes": "مصممة كأكورديون تفاعلي في فيغما وممتازة للتنفيذ في Next.js"
+    },
+    {
+      "screen": "بوابة الطالب والدعم (Support)",
+      "in_figma": false,
+      "in_wix": true,
+      "notes": "أدلة تدريب وإرشادات موجودة في Wix ولم تفرد لها شاشة خاصة في فيغما"
+    }
+  ]
+}

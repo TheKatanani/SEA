@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About SEA",
+    "programs": "Programs",
+    "admission": "Admissions",
+    "employers": "For Employers",
+    "partners": "Partners",
+    "gallery": "Gallery",
+    "apply": "Apply now",
+    "mainLabel": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "switchLanguage": "العربية"
+  },
+  "footer": {
+    "homeLabel": "Saudi Entertainment Academy — Home",
+    "mission": "We prepare national talent for the future of the entertainment sector in Saudi Arabia.",
+    "socialLabel": "SEA social media accounts",
+    "quickLinks": "Quick links",
+    "admission": "Admissions requirements",
+    "journey": "Student journey",
+    "support": "Support and guides",
+    "policies": "Policies and regulations",
+    "paris": "Paris Academy accreditation",
+    "contact": "Contact and campus location",
+    "programs": "Our programs",
+    "allPrograms": "Explore all programs",
+    "contactUs": "Contact us",
+    "allContact": "All contact information",
+    "copyright": "Saudi Entertainment Academy",
+    "demo": "Website forms register initial interest; they are not official admission applications."
+  },
+  "forms": {
+    "submit": "Submit",
+    "choose": "Select",
+    "privacyConsent": "I agree to the processing of my details so the Academy can respond, under its privacy policy.",
+    "noSave": "Do not submit sensitive information or identity documents through this form.",
+    "success": "Your request has reached the Academy team",
+    "successDescription": "Thank you for your interest. The team will use your contact details to respond.",
+    "error": "We could not send your request. Please try again later or contact the Academy directly.",
+    "another": "Submit another request",
+    "submitting": "Submitting..."
+  }
+}

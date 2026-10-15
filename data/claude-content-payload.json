@@ -1,0 +1,887 @@
+{
+  "metadata": {
+    "title": "المحتوى المعتمد للأكاديمية السعودية للترفيه (SEA)",
+    "target": "Next.js UI Reconstruction",
+    "audit_date": "2026-10-14",
+    "verification_status": "Verified from live Wix sites (ar.saea.sa / www.saea.sa)",
+    "rules_applied": "Read-only, no invented data, exact Arabic wording preserved, missing values marked as 'غير متوفر' or null"
+  },
+  "pages": [
+    {
+      "page_name_ar": "الرئيسية",
+      "page_name_en": "Home",
+      "slug_wix_ar": "https://ar.saea.sa/",
+      "slug_wix_en": "https://www.saea.sa/",
+      "slug_next_proposed": "/",
+      "h1": "غير متوفر في كود الموقع الأصلي (H1 Missing)",
+      "h2_ar": "حيث نخرج صناع السعادة",
+      "h2_en": "Where We Graduate Happiness Creators",
+      "hero_text": "حيث نخرج صناع السعادة - We graduate happiness creators",
+      "cta_buttons": [
+        {
+          "label_ar": "للتسجيل في الدبلوم",
+          "label_en": "Diploma Registration",
+          "destination": "https://linktr.ee/sea_ksa",
+          "type": "external"
+        },
+        {
+          "label_ar": "تسجيل الشركات الموظفة",
+          "label_en": "Employer companies",
+          "destination": "/company-registration",
+          "type": "internal"
+        }
+      ],
+      "sections": [
+        "Hero Banner",
+        "Strategic & Academic Partners Strip",
+        "Quick Registration Form",
+        "SEA Student Council Spotlight",
+        "Al-Rabwah Campus Location & Map",
+        "Footer"
+      ],
+      "source": "https://ar.saea.sa/",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "نبذة عن الأكاديمية (من نحن)",
+      "page_name_en": "About Us",
+      "slug_wix_ar": "https://ar.saea.sa/about",
+      "slug_wix_en": "https://www.saea.sa/about",
+      "slug_next_proposed": "/about",
+      "h1": "نبذة عن الاكاديمية",
+      "h2_ar": "هي أول أكاديمية ترفيهية معتمدة في الشرق الأوسط ، نحن نقدم برامج تدريبية تنتهي بالتوظيف.",
+      "h2_en": "The first accredited entertainment academy in the Middle East, offering training programs ending in employment.",
+      "body_summary_ar": "تأسست الأكاديمية السعودية للترفيه لتأهيل الكوادر الوطنية في قطاع الترفيه والفعاليات بالشراكة مع الهيئة العامة للترفيه والمؤسسة العامة للتدريب التقني والمهني وأكاديمية باريس الدولية.",
+      "body_summary_en": "Established to train and empower Saudi national talent in the entertainment and events sector under Vision 2030 Quality of Life Program.",
+      "sections": [
+        "Hero",
+        "About SEA Story",
+        "Mission & Vision",
+        "Core Values",
+        "Partners Ribbon"
+      ],
+      "source": "https://ar.saea.sa/about",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "دليل البرامج الأكاديمية والتدريبية",
+      "page_name_en": "Programs Directory",
+      "slug_wix_ar": "https://ar.saea.sa/programs",
+      "slug_wix_en": "https://www.saea.sa/programs",
+      "slug_next_proposed": "/programs",
+      "h1": "البرامج التدريبية | Programs",
+      "diplomas_count": 6,
+      "live_short_courses_count": 5,
+      "recorded_short_courses_count": 26,
+      "sections": [
+        "Hero",
+        "الدبلومات (Our Diploma)",
+        "دورات مباشرة قصيرة (Live Short Courses)",
+        "دورات قصيرة مسجلة (Recorded Short Courses)",
+        "زر العودة إلى الرئيسية"
+      ],
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "شروط التسجيل وبرامجنا",
+      "page_name_en": "Admission Criteria & Programs",
+      "slug_wix_ar": "https://ar.saea.sa/entertainment-diplomas",
+      "slug_wix_en": "https://www.saea.sa/entertainment-diplomas",
+      "slug_next_proposed": "/admission",
+      "h1": "شروط التسجيل",
+      "conditions_count": 11,
+      "source": "https://ar.saea.sa/entertainment-diplomas",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "تقديم طلب التحاق (المتدربين)",
+      "page_name_en": "Trainee Application",
+      "slug_wix_ar": "https://ar.saea.sa/trainee-admission",
+      "slug_wix_en": "https://www.saea.sa/trainee-admission",
+      "slug_next_proposed": "/apply",
+      "h1": "نموذج تقديم طلب",
+      "source": "https://ar.saea.sa/trainee-admission",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "تسجيل الشركات الموظفة",
+      "page_name_en": "Employer Registration (B2B)",
+      "slug_wix_ar": "https://ar.saea.sa/company-registration",
+      "slug_wix_en": "https://www.saea.sa/company-registration",
+      "slug_next_proposed": "/employers",
+      "h1": "Partner with SEEMA – Hire Skilled Saudi Talent",
+      "source": "https://ar.saea.sa/company-registration",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "معرض الصور ومكتبة الفيديو",
+      "page_name_en": "Media Gallery",
+      "slug_wix_ar": "https://ar.saea.sa/gallery",
+      "slug_wix_en": "https://www.saea.sa/gallery",
+      "slug_next_proposed": "/gallery",
+      "video_count": 4,
+      "photo_count_ar": 32,
+      "photo_count_en": 37,
+      "source": "https://ar.saea.sa/gallery",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "الاعتماد الدولي (أكاديمية باريس)",
+      "page_name_en": "Académie de Paris Partnership",
+      "slug_wix_ar": "https://ar.saea.sa/académie-paris",
+      "slug_wix_en": "https://www.saea.sa/académie-paris",
+      "slug_next_proposed": "/accreditation/academie-paris",
+      "h1": "أكاديمية باريس | Académie de Paris",
+      "source": "https://ar.saea.sa/académie-paris",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "الجامعة المشغلة (جامعة كوت دازور)",
+      "page_name_en": "Université Côte d'Azur",
+      "slug_wix_ar": "https://ar.saea.sa/our-operator",
+      "slug_wix_en": "https://www.saea.sa/our-operator",
+      "slug_next_proposed": "/partners/cote-dazur",
+      "source": "https://ar.saea.sa/our-operator",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "مراحل رحلة الطالب",
+      "page_name_en": "Student Journey",
+      "slug_wix_ar": "https://ar.saea.sa/studentjourney",
+      "slug_wix_en": "https://www.saea.sa/studentjourney",
+      "slug_next_proposed": "/student-journey",
+      "h1": "مراحل رحلة الطالب",
+      "source": "https://ar.saea.sa/studentjourney",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "السياسات واللوائح",
+      "page_name_en": "Policies & Regulations",
+      "slug_wix_ar": "https://ar.saea.sa/academic-honesty-policy",
+      "slug_wix_en": "https://www.saea.sa/academic-honesty-policy",
+      "slug_next_proposed": "/policies",
+      "sub_policies": [
+        {
+          "title_ar": "سياسة النزاهة الأكاديمية",
+          "slug_wix": "/academic-honesty-policy",
+          "slug_next": "/policies/academic-honesty"
+        },
+        {
+          "title_ar": "سياسة حضور الطلاب",
+          "slug_wix": "/students-attendance-policy",
+          "slug_next": "/policies/attendance"
+        },
+        {
+          "title_ar": "إجراءات الشكاوى",
+          "slug_wix": "/complaints-procedure",
+          "slug_next": "/policies/complaints"
+        },
+        {
+          "title_ar": "إرشادات حقوق الملكية الفكرية",
+          "slug_wix": "/intellectual-copyrights-guidelines",
+          "slug_next": "/policies/intellectual-property"
+        },
+        {
+          "title_ar": "سياسة الخصوصية",
+          "slug_wix": "/privacy-policy",
+          "slug_next": "/policies/privacy"
+        }
+      ],
+      "source": "https://ar.saea.sa/academic-honesty-policy",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "الدعم الفني والأدلة الإرشادية",
+      "page_name_en": "Technical Support & Guides",
+      "slug_wix_ar": "https://ar.saea.sa/technical-support-service-portal",
+      "slug_wix_en": "https://www.saea.sa/technical-support-service-portal",
+      "slug_next_proposed": "/support",
+      "sub_guides": [
+        {
+          "title_ar": "دليل استخدام المتدرب",
+          "slug_wix": "/trainee-user-guide",
+          "slug_next": "/support/trainee-guide"
+        },
+        {
+          "title_ar": "دليل استخدام المدرب",
+          "slug_wix": "/trainer-user-guide",
+          "slug_next": "/support/trainer-guide"
+        },
+        {
+          "title_ar": "إرشادات التعليم الإلكتروني",
+          "slug_wix": "/e-learning-guidance",
+          "slug_next": "/support/e-learning"
+        }
+      ],
+      "source": "https://ar.saea.sa/technical-support-service-portal",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "دبلوم المستقبل (إدارة الفعاليات MICE)",
+      "page_name_en": "Diploma of the Future",
+      "slug_wix_ar": "https://ar.saea.sa/mice-diplomas",
+      "slug_wix_en": "https://www.saea.sa/mice-diplomas",
+      "slug_next_proposed": "/campaigns/future-diploma",
+      "h1": "برنامج دبلوم إدارة الأحداث الترفيهية",
+      "source": "https://ar.saea.sa/mice-diplomas",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    },
+    {
+      "page_name_ar": "التواصل وموقع الفرع",
+      "page_name_en": "Contact Us",
+      "slug_wix_ar": "https://ar.saea.sa/#contactus",
+      "slug_wix_en": "https://www.saea.sa/#contactus",
+      "slug_next_proposed": "/contact",
+      "source": "https://ar.saea.sa/",
+      "last_reviewed": "2026-10-14",
+      "status": "Verified"
+    }
+  ],
+  "programs": [
+    {
+      "id": "PRG-DIP-01",
+      "name_ar": "إدارة مراكز الترفيه",
+      "name_en": "Entertainment Centers Management",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم (Active in curriculum)",
+      "slug_wix": "https://ar.saea.sa/copy-of-entertainment-management-center",
+      "slug_next_proposed": "/programs/entertainment-centers-management",
+      "summary_ar": "تأهيل المشرفين والمديرين لإدارة العمليات اليومية في الوجهات والمراكز الترفيهية وفق أعلى المعايير الدولية.",
+      "target_audience": "خريجو الثانوية العامة والباحثون عن مسار مهني قيادي في صناعة الترفيه",
+      "duration": "سنتان دراسيتان (4 فصول)",
+      "hours_and_schedule": "غير متوفر على الموقع الحالي (يحتاج تأكيد من الأكاديمية)",
+      "training_pillars": [
+        "إدارة العمليات الترفيهية",
+        "خدمة العملاء وتجربة الزائر",
+        "إدارة الفرق الإشرافية",
+        "السلامة وإدارة المخاطر"
+      ],
+      "learning_outcomes": "القدرة على تشغيل منشأة ترفيهية بكفاءة، إدارة المبيعات، وتطبيق معايير الجودة العالمية.",
+      "career_opportunities": "مدير مركز ترفيهي، مشرف تشغيل فعاليات، منسق عمليات ترفيهية",
+      "requirements": "شهادة الثانوية العامة، العمر 18-30، اجتياز المقابلة واختبار الإنجليزية",
+      "required_documents": [
+        "صورة الهوية الوطنية",
+        "أصل شهادة الثانوية العامة",
+        "السيرة الذاتية إن وجدت"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "المؤسسة العامة للتدريب التقني والمهني (TVTC) وأكاديمية باريس الدولية",
+      "media_source": "https://ar.saea.sa/programs (Wix CDN image)",
+      "media_rights": "حصرية للأكاديمية السعودية للترفيه (مملوكة للجهة)",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-02",
+      "name_ar": "تصميم مراكز الترفيه",
+      "name_en": "Entertainment Centers Design",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم",
+      "slug_wix": "https://ar.saea.sa/copy-of-entertainment-center-design",
+      "slug_next_proposed": "/programs/entertainment-centers-design",
+      "summary_ar": "دراسة وتخطيط المساحات الترفيهية وهندسة تدفق الزوار وتصميم بيئات ترفيهية غامرة وآمنة.",
+      "target_audience": "المهتمون بالتصميم الداخلي والمعماري وتخطيط الوجهات الترفيهية",
+      "duration": "سنتان دراسيتان (4 فصول)",
+      "hours_and_schedule": "غير متوفر على الموقع الحالي",
+      "training_pillars": [
+        "تخطيط المساحات",
+        "هندسة تجربة الزائر",
+        "معايير الأمان الإنشائي والتشغيلي"
+      ],
+      "learning_outcomes": "تطوير مخططات تشغيلية للمراكز الترفيهية ومعايير التدفق البشري",
+      "career_opportunities": "مصمم وجهات ترفيهية، منسق مشاريع ترفيه، أخصائي تجارب تفاعلية",
+      "requirements": "شهادة الثانوية العامة، العمر 18-30، اجتياز المقابلة",
+      "required_documents": [
+        "صورة الهوية الوطنية",
+        "أصل شهادة الثانوية العامة",
+        "السيرة الذاتية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "Académie de Paris & TVTC",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "حصرية للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-03",
+      "name_ar": "إدارة الحشود",
+      "name_en": "Crowd Management",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم",
+      "slug_wix": "https://ar.saea.sa/copy-of-crowd-and-safety",
+      "slug_next_proposed": "/programs/crowd-management",
+      "summary_ar": "تأهيل متخصصين في إدارة وتوجيه وتأمين الحشود في الفعاليات الكبرى والمهرجانات والملاعب الرياضية.",
+      "target_audience": "الشباب الراغبون في تخصصات الأمن والسلامة وإدارة الفعاليات الجماهيرية",
+      "duration": "سنتان دراسيتان",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "ديناميكية حركة الحشود",
+        "خطط الإخلاء والطوارئ",
+        "أنظمة التواصل والمراقبة",
+        "بروتوكولات الأمان الدولية"
+      ],
+      "learning_outcomes": "إعداد خطط إدارة الحشود الميدانية والاستجابة للطوارئ",
+      "career_opportunities": "أخصائي إدارة حشود، مشرف أمن فعاليات، قائد فريق توجيه ميداني",
+      "requirements": "شهادة الثانوية، اللياقة الطبية، اجتياز المقابلة الشخصية",
+      "required_documents": [
+        "صورة الهوية الوطنية",
+        "أصل الشهادة الثانوية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "Académie de Paris & TVTC",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-04",
+      "name_ar": "مطور تكنولوجيا ألعاب الفيديو",
+      "name_en": "Video Games IT Developer",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم",
+      "slug_wix": "https://ar.saea.sa/copy-of-sales-6",
+      "slug_next_proposed": "/programs/video-games-developer",
+      "summary_ar": "البرمجة والتطوير التقني لألعاب الفيديو والرياضات الإلكترونية والبيئات التفاعلية.",
+      "target_audience": "هواة البرمجة والتقنية وصناعة الألعاب الإلكترونية",
+      "duration": "سنتان دراسيتان",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "محركات الألعاب",
+        "برمجة الذكاء الاصطناعي للألعاب",
+        "تصميم المستويات التفاعلية"
+      ],
+      "learning_outcomes": "بناء وتطوير ألعاب وتطبيقات تفاعلية متكاملة",
+      "career_opportunities": "مطور ألعاب، مبرمج بيئات تفاعلية، أخصائي دعم تقني للألعاب",
+      "requirements": "الثانوية العامة، اختبار لغة إنجليزية، شغف بالبرمجة",
+      "required_documents": [
+        "الهوية الوطنية",
+        "الشهادة الثانوية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "TVTC",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-05",
+      "name_ar": "صيانة مراكز الترفيه",
+      "name_en": "Entertainment Centers Maintenance",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم",
+      "slug_wix": "https://ar.saea.sa/copy-of-entertainment-center-maintenance",
+      "slug_next_proposed": "/programs/entertainment-centers-maintenance",
+      "summary_ar": "صيانة وتشغيل المعدات والألعاب الكهروميكانيكية وأنظمة المرافق الترفيهية وفق المعايير الفنية.",
+      "target_audience": "خريجو الثانوية بالمسار العلمي أو المهني",
+      "duration": "سنتان دراسيتان",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "الصيانة الوقائية والدورية للألعاب",
+        "الأنظمة الكهربائية والهيدروليكية",
+        "معايير السلامة المهنية"
+      ],
+      "learning_outcomes": "تشخيص الأعطال الميكانيكية وإجراء الصيانة الفورية للألعاب",
+      "career_opportunities": "فني صيانة ألعاب، مشرف صيانة مرافق، تقني تشغيل ميكانيكي",
+      "requirements": "الثانوية العامة (علمي/تقني مفضل)، لائق طبياً",
+      "required_documents": [
+        "صورة بطاقة الأحوال",
+        "أصل الشهادة"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "TVTC & IAAPA standards",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-06",
+      "name_ar": "سلامة مراكز الترفيه",
+      "name_en": "Entertainment Centers Safety",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / قائم",
+      "slug_wix": "https://ar.saea.sa/copy-of-entertainment-center-safety",
+      "slug_next_proposed": "/programs/entertainment-centers-safety",
+      "summary_ar": "تطبيق معايير الصحة والسلامة المهنية وإدارة المخاطر والتفتيش على الألعاب والمرافق الترفيهية.",
+      "target_audience": "المهتمون بالأمن والسلامة المهنية وإدارة الجودة",
+      "duration": "سنتان دراسيتان",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "تقييم المخاطر",
+        "معايير التفتيش والاعتماد",
+        "إجراءات الطوارئ والسلامة"
+      ],
+      "learning_outcomes": "إجراء التفتيش الدوري وضمان مطابقة الألعاب للمواصفات الدولية",
+      "career_opportunities": "أخصائي سلامة ترفيهية، مفتش جودة وأمان، ضابط صحة وسلامة مهنية",
+      "requirements": "الثانوية العامة، اجتياز المقابلة واختبار القبول",
+      "required_documents": [
+        "صورة الهوية",
+        "الشهادة الثانوية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "TVTC & Académie de Paris",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-DIP-07",
+      "name_ar": "دبلوم إدارة المعارض والمؤتمرات (MICE)",
+      "name_en": "MICE & Events Management Diploma",
+      "category": "دبلوم (Diploma)",
+      "status": "مفتوح / بحملة تسويقية نشطة",
+      "slug_wix": "https://ar.saea.sa/mice-diplomas",
+      "slug_next_proposed": "/programs/mice-management",
+      "summary_ar": "برنامج تدريبي معتمد بدعم من صندوق تنمية الموارد البشرية (هدف) لإعداد قادة صناعة المؤتمرات والمعارض في المملكة.",
+      "target_audience": "السعوديون الباحثون عن عمل في قطاع الفعاليات والمعارض",
+      "duration": "سنتان (تدريب منتهي بالتوظيف)",
+      "hours_and_schedule": "غير متوفر بالتفصيل",
+      "training_pillars": [
+        "تخطيط المعارض والمؤتمرات",
+        "التسويق وجلب الرعايات",
+        "اللوجستيات والعمليات الميدانية"
+      ],
+      "learning_outcomes": "إدارة الفعالية بالكامل من الفكرة والتخطيط حتى التنفيذ والتقييم",
+      "career_opportunities": "منسق مؤتمرات، أخصائي فعاليات، مدير مبيعات معارض",
+      "requirements": "سعودي، عمر 18-30، ثانوية عامة كحد أدنى، غير موظف، غير مسجل بالتأمينات، لم يستفد من هدف سابقاً",
+      "required_documents": [
+        "صورة الهوية الوطنية",
+        "أصل شهادة الثانوية",
+        "السيرة الذاتية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "صندوق هدف + TVTC + الشركاء الموظفون",
+      "media_source": "https://ar.saea.sa/mice-diplomas",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/mice-diplomas",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-SHORT-01",
+      "name_ar": "الترحيب والإجراءات التنظيمية (البروتوكولية) للفعاليات",
+      "name_en": "Welcome & Event Protocol Activities",
+      "category": "دورة مباشرة قصيرة (Live Short Course)",
+      "status": "قائم / دورة تدريبية",
+      "slug_wix": "https://ar.saea.sa/programs",
+      "slug_next_proposed": "/courses/event-protocol",
+      "summary_ar": "التدريب على فنون الاستقبال والبروتوكول الرسمي وإجراءات الترحيب بكبار الشخصيات في الفعاليات والمواسم.",
+      "target_audience": "العاملون في الاستقبال وفرق المراسم والتشريفات",
+      "duration": "قصيرة (مكثفة)",
+      "hours_and_schedule": "غير متوفر بالساعات",
+      "training_pillars": [
+        "أصول البروتوكول والضيافة",
+        "التعامل مع كبار الشخصيات",
+        "إدارة بوابات الاستقبال"
+      ],
+      "learning_outcomes": "إتقان آداب البروتوكول وحل مشكلات الاستقبال باحترافية",
+      "career_opportunities": "مشرف استقبال، منسق تشريفات، موظف علاقات عامة فعاليات",
+      "requirements": "المعرفة بأساسيات التواصل وخدمة العملاء",
+      "required_documents": [
+        "الهوية الوطنية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "الأكاديمية السعودية للترفيه",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-SHORT-02",
+      "name_ar": "العناية بالعملاء في قطاع الترفيه",
+      "name_en": "Customer Care in Entertainment",
+      "category": "دورة مباشرة قصيرة (Live Short Course)",
+      "status": "قائم / دورة تدريبية",
+      "slug_wix": "https://ar.saea.sa/programs",
+      "slug_next_proposed": "/courses/customer-care",
+      "summary_ar": "مهارات تقديم تجربة زائر استثنائية وإدارة شكاوى العملاء في المتنزهات والفعاليات.",
+      "target_audience": "موظفو الواجهة الأمامية وخدمة الزوار",
+      "duration": "قصيرة مكثفة",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "مهارات التواصل الفعال",
+        "إدارة التوقعات والاعتراضات",
+        "صناعة البهجة للزائر"
+      ],
+      "learning_outcomes": "رفع مستوى رضا الزوار والتعامل مع المواقف الحرجة",
+      "career_opportunities": "ممثل خدمة عملاء، مشرف تجربة زائر",
+      "requirements": "حسن المظهر ومهارات التواصل",
+      "required_documents": [
+        "الهوية الوطنية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "الأكاديمية السعودية للترفيه",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-SHORT-03",
+      "name_ar": "الترحيب والبيع في المتاجر الترفيهية",
+      "name_en": "Boutique Welcome & Sale",
+      "category": "دورة مباشرة قصيرة (Live Short Course)",
+      "status": "قائم / دورة تدريبية",
+      "slug_wix": "https://ar.saea.sa/programs",
+      "slug_next_proposed": "/courses/boutique-sales",
+      "summary_ar": "تقنيات البيع والتسويق لمنتجات ومقتنيات الفعاليات والمراكز الترفيهية (Merchandise).",
+      "target_audience": "موظفو مبيعات المتاجر الترفيهية ومتاجر التذكارات",
+      "duration": "قصيرة",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "عرض وترتيب المنتجات",
+        "مهارات الإقناع والبيع الإضافي",
+        "عمليات نقاط البيع"
+      ],
+      "learning_outcomes": "زيادة مبيعات المتاجر وتقديم تجربة تسوق ممتعة",
+      "career_opportunities": "أخصائي مبيعات متاجر ترفيهية، مسؤول نقطة بيع",
+      "requirements": "المعرفة باللغة الإنجليزية ومهارات البيع",
+      "required_documents": [
+        "الهوية الوطنية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "الأكاديمية السعودية للترفيه",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-SHORT-04",
+      "name_ar": "تنظيم المؤتمر والفعالية",
+      "name_en": "Conference & Event Organization",
+      "category": "دورة مباشرة قصيرة (Live Short Course)",
+      "status": "قائم / دورة تدريبية",
+      "slug_wix": "https://ar.saea.sa/programs",
+      "slug_next_proposed": "/courses/conference-organization",
+      "summary_ar": "الخطوات التنفيذية لتنظيم وإدارة الجلسات وورش العمل والقاعات في المؤتمرات الكبرى.",
+      "target_audience": "منسقو الفعاليات ومساعدو التنظيم",
+      "duration": "قصيرة",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "جدولة الجلسات والمتحدثين",
+        "إدارة التجهيزات الفنية للقاعات",
+        "التنسيق اللوجستي"
+      ],
+      "learning_outcomes": "إدارة تشغيل قاعات المؤتمرات بسلاسة تامة",
+      "career_opportunities": "منسق قاعات مؤتمرات، منظم فعاليات",
+      "requirements": "الثانوية العامة",
+      "required_documents": [
+        "الهوية الوطنية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "الأكاديمية السعودية للترفيه",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    },
+    {
+      "id": "PRG-SHORT-05",
+      "name_ar": "التسويق والترويج للحدث",
+      "name_en": "Event Marketing & Promotion",
+      "category": "دورة مباشرة قصيرة (Live Short Course)",
+      "status": "قائم / دورة تدريبية",
+      "slug_wix": "https://ar.saea.sa/programs",
+      "slug_next_proposed": "/courses/event-marketing",
+      "summary_ar": "استراتيجيات الحملات الإعلانية وجذب الجماهير وبناء الهوية البصرية للفعاليات والمواسم.",
+      "target_audience": "المسوقون الرقميون ومنسقو الحملات الترويجية",
+      "duration": "قصيرة",
+      "hours_and_schedule": "غير متوفر",
+      "training_pillars": [
+        "خطة التسويق للفعالية",
+        "استخدام شبكات التواصل الاجتماعي",
+        "قياس عائد الاستثمار الترويجي"
+      ],
+      "learning_outcomes": "بناء حملة تسويقية ناجحة تحقق مبيعات التذاكر المطلوبة",
+      "career_opportunities": "أخصائي تسويق فعاليات، منسق حملات رقمية",
+      "requirements": "إلمام بأساسيات التسويق الرقمي",
+      "required_documents": [
+        "الهوية الوطنية"
+      ],
+      "apply_url": "https://linktr.ee/sea_ksa",
+      "partner_accreditation": "الأكاديمية السعودية للترفيه",
+      "media_source": "https://ar.saea.sa/programs",
+      "media_rights": "مملوكة للأكاديمية",
+      "source": "https://ar.saea.sa/programs",
+      "last_reviewed": "2026-10-14",
+      "verification_status": "Verified"
+    }
+  ],
+  "admissions": {
+    "source": "https://ar.saea.sa/entertainment-diplomas",
+    "last_reviewed": "2026-10-14",
+    "conditions_verbatim_ar": [
+      "1- أن يكون المتقدم سعودي الجنسية.",
+      "2- أن يكون عمر المتقدم من ١٨ سنة إلى ٣٠ سنة.",
+      "3- أن يكون المتقدم حاصلاً على شهادة الثانوية العامة فما فوق.",
+      "4- ان لا يكون المتقدم لديه سجل تجاري.",
+      "5- ألا يكون المتقدم على رأس عمل.",
+      "6- ان لا يكون المتقدم مسجلاً في التأمينات الاجتماعية.",
+      "7- ألا يكون المتقدم قد تم دعمه مسبقاً من قبل صندوق الموارد البشرية (هدف).",
+      "8- التفرغ الكامل والالتزام بحضور البرنامج بأكمله في الأكاديمية السعودية للترفيه.",
+      "9- أن يجتاز اختبار تحديد مستوى اللغة الإنجليزية.",
+      "10- أداء مقياس الميول المهنية.",
+      "11- أن يجتاز المقابلة الشخصية من قبل كل من الأكاديمية والشركة الموظفة."
+    ],
+    "required_documents_verbatim_ar": [
+      "- صورة من بطاقة الأحوال (الهوية الوطنية).",
+      "- الشهادة الأصلية لآخر مؤهل العلمي.",
+      "- صورة من السيرة الذاتية إن وجدت."
+    ],
+    "variations_and_conflicts": [
+      "في صفحة /mice-diplomas تم عرض الشروط كبطاقات مختصرة لندوة عبر الإنترنت تركز على 8 شروط بدلاً من 11.",
+      "في صفحة /trainee-admission تم تضمين نموذج تسجيل مباشر، بينما الأزرار الرئيسية في الصفحة الرئيسية وصفحات البرامج توجه إلى رابط خارجي Linktree (https://linktr.ee/sea_ksa)."
+    ],
+    "registration_destinations": [
+      {
+        "goal": "تسجيل الدبلومات العامة",
+        "url": "https://linktr.ee/sea_ksa",
+        "type": "خارجي (Linktree)"
+      },
+      {
+        "goal": "نموذج تقديم طلب متدرب",
+        "url": "https://ar.saea.sa/trainee-admission",
+        "type": "داخلي (Wix Form)"
+      },
+      {
+        "goal": "تسجيل الشركات الموظفة",
+        "url": "https://ar.saea.sa/company-registration",
+        "type": "داخلي (Wix Form)"
+      },
+      {
+        "goal": "التقديم على وظائف الأكاديمية",
+        "url": "mailto:recruitment@saea.sa",
+        "type": "بريد إلكتروني مباشر"
+      }
+    ]
+  },
+  "partners": [
+    {
+      "name_ar": "الهيئة العامة للترفيه (GEA)",
+      "name_en": "General Entertainment Authority",
+      "role": "الجهة الحكومية الراعية والداعمة للأكاديمية والقطاع الترفيهي",
+      "website": "https://www.gea.gov.sa/",
+      "logo_url": "https://static.wixstatic.com/media/6a3abf_514cd15c083940ce90e4c3c3631ee889~mv2.png/v1/fill/w_80,h_46,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/GEA_PrimaryVerticalLogo_ForUseOnLight_RGB-white.png",
+      "usage_rights": "شعار رسمي مرخص للشراكة الاستراتيجية"
+    },
+    {
+      "name_ar": "المؤسسة العامة للتدريب التقني والمهني (TVTC)",
+      "name_en": "Technical and Vocational Training Corporation",
+      "role": "الجهة الحكومية المنظمة والمشرفة على التراخيص واعتماد الدبلومات",
+      "website": "https://tvtc.gov.sa/",
+      "logo_url": "https://static.wixstatic.com/media/c94e6f_aa2395dc916a47bf9f8d237c78958229~mv2.png/v1/fill/w_124,h_57,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/HRDF%20new%20logo%20white.png",
+      "usage_rights": "شعار رسمي جهة الترخيص الوطنية"
+    },
+    {
+      "name_ar": "صندوق تنمية الموارد البشرية (هدف / HRDF)",
+      "name_en": "Human Resources Development Fund",
+      "role": "الشريك المالي الداعم للمكافآت الشهرية وعقود التدريب المنتهي بالتوظيف",
+      "website": "https://www.hrdf.org.sa/",
+      "logo_url": "https://static.wixstatic.com/media/c94e6f_aa2395dc916a47bf9f8d237c78958229~mv2.png/v1/fill/w_124,h_57,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/HRDF%20new%20logo%20white.png",
+      "usage_rights": "شعار شريك التمويل الوطني"
+    },
+    {
+      "name_ar": "كليات التميز (CoE)",
+      "name_en": "Colleges of Excellence",
+      "role": "الجهة المشرفة على معايير الكليات والمعاهد التطبيقية في المملكة",
+      "website": "https://coe.com.sa/",
+      "logo_url": "https://static.wixstatic.com/media/c94e6f_e7f5692306914e4c9c86ad61e98e519e~mv2.png/v1/fill/w_111,h_57,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/celogow.png",
+      "usage_rights": "شعار رسمي معتمد"
+    },
+    {
+      "name_ar": "جامعة كوت دازور (فرنسا)",
+      "name_en": "Université Côte d'Azur",
+      "role": "الشريك الأكاديمي الدولي المشغل للبرامج التخصصية",
+      "website": "https://univ-cotedazur.fr/",
+      "logo_url": "https://static.wixstatic.com/media/c94e6f_b2eebcedb9bc4e88996a848dc5c10e3b~mv2.png/v1/fill/w_180,h_46,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1200px-Logo_universit%C3%A9_c%C3%B4te_azur%20white.png",
+      "usage_rights": "شعار شريك أكاديمي دولي"
+    }
+  ],
+  "accreditations": [
+    {
+      "name_ar": "أكاديمية باريس الدولية (فرنسا)",
+      "name_en": "Académie de Paris",
+      "accreditation_scope": "الاعتماد الأكاديمي للشهادات والدبلومات وتأهيل المدربين ونقل المناهج الأوروبية في قطاع الترفيه والسياحة",
+      "website": "https://www.ac-paris.fr/",
+      "logo_url": "https://static.wixstatic.com/media/c94e6f_57edf092453141fe9dc53b07d048e3d2~mv2.png/v1/fill/w_149,h_143,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Paris%20academy%20logo%20white.png",
+      "verified_status": "مؤكد في صفحات الموقع وفي الصفحة المخصصة /académie-paris"
+    }
+  ],
+  "faqs": [
+    {
+      "question_ar": "هل الدبلومات المقدمة من الأكاديمية معتمدة؟",
+      "answer_ar": "نعم، جميع دبلومات الأكاديمية معتمدة من المؤسسة العامة للتدريب التقني والمهني (TVTC) وبالشراكة مع أكاديمية باريس الدولية.",
+      "source": "مستخلص من نصوص صفحة /about و /entertainment-diplomas"
+    },
+    {
+      "question_ar": "هل البرامج التدريبية منتهية بالتوظيف؟",
+      "answer_ar": "نعم، تقدم الأكاديمية برامج تدريبية منتهية بالتوظيف بالشراكة مع كبرى الشركات المشغلة في قطاع الترفيه والفعاليات في المملكة وبدعم من صندوق (هدف).",
+      "source": "مستخلص من نص الصفحة الرئيسية ونموذج الشركات"
+    },
+    {
+      "question_ar": "ما هي الفئة العمرية المسموح لها بالتقديم على الدبلومات؟",
+      "answer_ar": "يشترط أن يكون عمر المتقدم بين 18 سنة و 30 سنة.",
+      "source": "الشرط رقم 2 في صفحة /entertainment-diplomas"
+    },
+    {
+      "question_ar": "هل يلزم التفرغ التام للدراسة؟",
+      "answer_ar": "نعم، يشترط التفرغ الكامل والالتزام بحضور البرنامج بأكمله في مقر الأكاديمية بالرياض، وألا يكون المتقدم على رأس عمل أو مسجلاً في التأمينات الاجتماعية.",
+      "source": "الشروط 5 و 6 و 8 في صفحة /entertainment-diplomas"
+    }
+  ],
+  "contact": {
+    "campus_name_ar": "فرع الربوة - الرياض",
+    "campus_name_en": "Rabwah Branch - Riyadh",
+    "postal_address_ar": "الصندوق البريدي 50983، الرياض 11533، المملكة العربية السعودية",
+    "postal_address_en": "P.O. Box: 50983, Riyadh 11533 - KSA",
+    "google_maps_url": "https://goo.gl/maps/r17QNRDvan8vUkjA6",
+    "emails": {
+      "general_inquiries": "Info@saea.sa",
+      "careers_and_jobs": "recruitment@saea.sa"
+    },
+    "phone_numbers": {
+      "arabic_site_listed": "+966 500245151",
+      "english_site_listed": "+966 55 587 2470",
+      "conflict_note": "يوجد تعارض بين الموقع العربي والإنجليزي، يلزم تأكيد الرقم المعتمد من إدارة الأكاديمية"
+    },
+    "social_links": [
+      {
+        "platform": "Instagram (الرسمي)",
+        "handle": "@se_acdmy",
+        "url": "https://www.instagram.com/se_acdmy/",
+        "verified": true
+      },
+      {
+        "platform": "Instagram (قديم في الفوتر)",
+        "handle": "@ksa_sea1",
+        "url": "https://www.instagram.com/ksa_sea1/",
+        "verified": false
+      },
+      {
+        "platform": "Twitter / X (الرسمي)",
+        "handle": "@se_acdmy",
+        "url": "https://twitter.com/se_acdmy",
+        "verified": true
+      },
+      {
+        "platform": "LinkedIn (رابط معطل)",
+        "url": "https://www.linkedin.com/company/76518256/admin/",
+        "issue": "يفتح لوحة الإدارة الداخلية ويتطلب صلاحية دخول"
+      },
+      {
+        "platform": "LinkedIn (بروفايل شخصي)",
+        "url": "https://www.linkedin.com/in/saudi-entertainment-academy-sea-75052418a",
+        "verified": false
+      },
+      {
+        "platform": "Facebook (الرسمي)",
+        "handle": "SaudiEntmtAcad",
+        "url": "https://www.facebook.com/SaudiEntmtAcad",
+        "verified": true
+      },
+      {
+        "platform": "Snapchat",
+        "url": "http://www.snapchat.com/se_acdmy",
+        "note": "يستخدم بروتوكول http غير المشفر"
+      },
+      {
+        "platform": "TikTok",
+        "url": "http://www.tiktok.com/se_acdmy",
+        "note": "يستخدم بروتوكول http غير المشفر"
+      }
+    ]
+  },
+  "media": [
+    {
+      "title_ar": "شعار الأكاديمية الرئيسي الأبيض مع السلوجان",
+      "type": "image/png",
+      "url": "https://static.wixstatic.com/media/c94e6f_edf451f7ca26469aa33d182bbe7b84e6~mv2.png/v1/fill/w_1194,h_209,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/SLGN%20WHITE.png",
+      "usage_rights": "هوية بصرية معتمدة للأكاديمية"
+    },
+    {
+      "title_ar": "فيديو: مقدمة عن الأكاديمية (SEA)",
+      "type": "video/mp4",
+      "duration": "01:06",
+      "source_page": "https://ar.saea.sa/gallery",
+      "usage_rights": "مملوك للأكاديمية"
+    },
+    {
+      "title_ar": "فيديو: مبادرة صناع السعادة",
+      "type": "video/mp4",
+      "duration": "00:49",
+      "source_page": "https://ar.saea.sa/gallery",
+      "usage_rights": "مملوك للأكاديمية والهيئة العامة للترفيه"
+    },
+    {
+      "title_ar": "فيديو: 30 دورة تدريبية إلكترونية",
+      "type": "video/mp4",
+      "duration": "01:05",
+      "source_page": "https://ar.saea.sa/gallery",
+      "usage_rights": "مملوك للأكاديمية"
+    },
+    {
+      "title_ar": "معرض صور الفعاليات والتخريج",
+      "type": "image_gallery",
+      "count_items": 32,
+      "source_page": "https://ar.saea.sa/gallery",
+      "usage_rights": "مملوكة للأكاديمية السعودية للترفيه"
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "Q01",
+      "topic": "رقم الهاتف المعتمد",
+      "details": "الموقع العربي يعرض +966 500245151 بينما الإنجليزي يعرض +966 55 587 2470. أي منهما هو الخط الساخن المعتمد؟"
+    },
+    {
+      "id": "Q02",
+      "topic": "رابط التقديم على الدبلومات",
+      "details": "هل يستمر استخدام رابط Linktree الخارجي أم يتم استبداله بالكامل بنموذج التقديم المدمج في واجهة Next.js؟"
+    },
+    {
+      "id": "Q03",
+      "topic": "قائمة الدبلومات النشطة حالياً",
+      "details": "يوجد 6 دبلومات في صفحة /programs ودبلوم فعاليات في /mice-diplomas ودبلومات إضافية في صفحات Wix المنسوخة. ما هي الدبلومات المعتمدة لدفعة 2026/2027؟"
+    },
+    {
+      "id": "Q04",
+      "topic": "رابط صفحة لينكدإن الرسمية",
+      "details": "الرابط الحالي في الموقع يوجه إلى صفحة الأدمن https://www.linkedin.com/company/76518256/admin/ مما يسبب خطأ 403 للزوار. نحتاج رابط الشركة العام الصحيح."
+    },
+    {
+      "id": "Q05",
+      "topic": "ساعات ورسوم الدورات القصيرة",
+      "details": "الدورات القصيرة معروضة كعناوين فقط دون ذكر عدد الساعات التدريبية أو الرسوم أو أوقات الانعقاد."
+    }
+  ]
+}
