@@ -42,7 +42,8 @@ export async function requireAdmin(request: NextRequest, allowedRoles?: AdminRol
 
   let claims: DecodedIdToken;
   try {
-    claims = await getAdminAuth().verifyIdToken(token, true);
+    const auth = await getAdminAuth();
+    claims = await auth.verifyIdToken(token, true);
   } catch {
     throw new AdminAuthError("Invalid or expired session", 401);
   }

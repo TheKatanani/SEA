@@ -1,7 +1,6 @@
 import "server-only";
 
 import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 function parseServiceAccount() {
@@ -43,7 +42,8 @@ function getAdminApp() {
   return initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
 }
 
-export function getAdminAuth() {
+export async function getAdminAuth() {
+  const { getAuth } = await import("firebase-admin/auth");
   return getAuth(getAdminApp());
 }
 

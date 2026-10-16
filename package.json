@@ -36,6 +36,7 @@
     "postcss": "^8.5.23",
     "@grpc/grpc-js": "^1.14.6",
     "@firebase/app": "0.16.2",
-    "@firebase/app-compat": "0.5.18"
+    "@firebase/app-compat": "0.5.18",
+    "jwks-rsa": "3.2.2"
   }
 }
