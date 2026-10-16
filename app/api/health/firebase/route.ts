@@ -11,7 +11,7 @@ export async function GET() {
     const code = getSafeErrorCode(error);
     console.error("Firebase Admin diagnostic failed during module load", code);
     return Response.json(
-      { status: "module-load-failed", code, nodeMajor },
+      { status: "module-load-failed", code, nodeVersion: process.versions.node, modules: getSafeModuleNames(error) },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
@@ -44,4 +44,9 @@ function getSafeErrorCode(error: unknown) {
     return String(error.code).slice(0, 80);
   }
   return error instanceof Error ? error.name : "unknown";
+}
+
+function getSafeModuleNames(error: unknown) {
+  if (!(error instanceof Error)) return [];
+  return [...new Set([...error.message.matchAll(/node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)/g)].map((match) => match[1]))].slice(0, 4);
 }
