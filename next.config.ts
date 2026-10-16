@@ -17,6 +17,7 @@ const routeMap = migration.url_redirects_and_routes as Array<{ legacy: string; n
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   outputFileTracingRoot: process.cwd(),
+  serverExternalPackages: ["firebase-admin"],
   images: {
     formats: ["image/avif", "image/webp"],
   },
