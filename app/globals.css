@@ -220,7 +220,7 @@ html[dir="ltr"] .brand{margin-inline-end:4px}
 .cms-section-link{display:flex;justify-content:center;margin-top:24px}
 .cms-card__action{display:flex;align-items:center;gap:7px;padding:0 20px 18px;color:var(--purple);font-size:12px;font-weight:700}
 .contact-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
-.contact-detail-grid .contact-card{min-width:0;margin:0}
+.contact-detail-grid .contact-card{min-width:0;margin:0;align-items:center}
 .contact-detail-grid .contact-card>div{min-width:0}
 .contact-detail-grid .contact-card a{display:flex;align-items:center;gap:5px;margin-top:5px;color:var(--purple);overflow-wrap:anywhere}
 .form-title{margin:0;color:var(--ink);font-size:clamp(22px,3vw,30px);line-height:1.35}
