@@ -153,6 +153,7 @@ export function AdminConsole() {
       const saved = { ...value, id: result.id };
       setSelected(saved); setDraft(JSON.stringify(saved, null, 2));
       setNotice(english ? "Saved" : "تم الحفظ");
+      if (collection === "brand") window.dispatchEvent(new Event("sea:brand-updated"));
       await loadItems(collection);
       setSelected(saved); setDraft(JSON.stringify(saved, null, 2));
     } catch (caught) { setError(caught instanceof Error ? caught.message : english ? "Could not save this record" : "تعذر حفظ السجل"); }

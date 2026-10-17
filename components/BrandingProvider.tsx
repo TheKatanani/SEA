@@ -34,8 +34,11 @@ export function useBrandSettings() {
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const [brand, setBrand] = useState<BrandSettings>({});
   useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/site/brand", { cache: "no-store", signal: controller.signal })
+    let controller: AbortController | undefined;
+    const refresh = () => {
+      controller?.abort();
+      controller = new AbortController();
+      fetch("/api/site/brand", { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : null)
       .then((result) => {
         const settings = result?.brand as BrandSettings | undefined;
@@ -55,8 +58,14 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         const accent = safeColor(publicSettings.accentColor);
         const arabicFont = safeFont(publicSettings.fontArabic);
         const englishFont = safeFont(publicSettings.fontEnglish);
-        if (primary) root.style.setProperty("--purple", primary);
-        if (accent) root.style.setProperty("--lavender", accent);
+        if (primary) {
+          root.style.setProperty("--brand-primary", primary);
+          root.style.setProperty("--purple", primary);
+        }
+        if (accent) {
+          root.style.setProperty("--brand-accent", accent);
+          root.style.setProperty("--lavender", accent);
+        }
         if (arabicFont) root.style.setProperty("--brand-font-ar", `"${arabicFont}", sans-serif`);
         if (englishFont) root.style.setProperty("--brand-font-en", `"${englishFont}", sans-serif`);
         if (publicSettings.faviconUrl) {
@@ -67,7 +76,20 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(() => {});
-    return () => controller.abort();
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    refresh();
+    window.addEventListener("sea:brand-updated", refresh);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      controller?.abort();
+      window.removeEventListener("sea:brand-updated", refresh);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
   return <BrandContext.Provider value={brand}>{children}</BrandContext.Provider>;
 }

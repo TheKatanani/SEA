@@ -226,3 +226,25 @@ html[dir="ltr"] .brand{margin-inline-end:4px}
 .form-title{margin:0;color:var(--ink);font-size:clamp(22px,3vw,30px);line-height:1.35}
 .cms-page__copy .form-grid{padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 12px 34px rgba(18,39,58,.05)}
 @media(max-width:760px){.contact-detail-grid{grid-template-columns:1fr}.cms-page__copy .form-grid{padding:16px}.cms-page__hero .button-row .button{flex:1 1 auto}}
+
+/* Let published brand settings control the public site's primary and accent colors. */
+:root{--brand-primary:#087180;--brand-accent:#f1a52d;--purple:var(--brand-primary);--purple-dark:color-mix(in srgb,var(--brand-primary),#000 30%);--lavender:var(--brand-accent);--lilac:color-mix(in srgb,var(--brand-primary),#fff 91%)}
+.eyebrow{color:var(--brand-primary)}
+.eyebrow__dot{background:var(--brand-accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--brand-accent) 15%,transparent)}
+.button--primary{background:var(--brand-primary);box-shadow:0 9px 24px color-mix(in srgb,var(--brand-primary) 20%,transparent)}
+.button--primary:hover{background:color-mix(in srgb,var(--brand-primary),#000 14%)}
+.text-link{color:var(--brand-primary)}
+.text-link:hover{color:color-mix(in srgb,var(--brand-primary),#000 20%)}
+.site-nav__link:hover,.site-nav__link.is-active{color:var(--brand-primary)}
+.home-hero--editorial .home-hero__copy h1 span{color:var(--brand-accent)}
+.home-hero--editorial .button--primary{background:var(--brand-primary)}
+.program-card__badge{color:var(--brand-primary)}
+.program-card__arrow{color:var(--brand-primary);background:color-mix(in srgb,var(--brand-primary) 10%,#fff)}
+.benefit-card__icon{color:var(--brand-primary);background:color-mix(in srgb,var(--brand-primary) 10%,#fff)}
+.site-nav__link:hover{color:var(--brand-primary);background:color-mix(in srgb,var(--brand-primary) 8%,#fff)}
+.site-nav__link.is-active{color:var(--brand-primary)}
+.site-nav__link:focus-visible,.language-toggle:focus-visible{outline-color:var(--brand-primary)}
+.language-toggle{color:var(--brand-primary)}
+.language-toggle:hover{background:color-mix(in srgb,var(--brand-primary) 8%,#fff);border-color:color-mix(in srgb,var(--brand-primary) 25%,#fff)}
+.cms-page__hero{background:radial-gradient(ellipse at 80% 10%,color-mix(in srgb,var(--brand-primary) 16%,transparent),transparent 35%),linear-gradient(120deg,color-mix(in srgb,var(--brand-primary) 5%,#fff),#fbfaf7)}
+.cms-collection-grid--partners .cms-card__image--logo{background:radial-gradient(ellipse at 80% 18%,color-mix(in srgb,var(--brand-accent) 18%,transparent),transparent 32%),linear-gradient(135deg,#102c47,color-mix(in srgb,var(--brand-primary) 72%,#102c47))}
