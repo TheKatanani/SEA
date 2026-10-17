@@ -857,6 +857,14 @@
   font-weight: 600;
 }
 
+.structured-field-help {
+  display: block;
+  align-self: center;
+  color: #6b7d89;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
 .structured-field textarea,
 .structured-field input,
 .structured-field select {
