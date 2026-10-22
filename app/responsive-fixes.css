@@ -1,0 +1,22 @@
+/* Keep the desktop navigation from overflowing at tablet widths. */
+@media (min-width: 761px) and (max-width: 1050px) {
+  .site-header__inner { justify-content: space-between; }
+  .site-header__actions { margin-inline-start: auto; }
+  .menu-toggle { display: flex; }
+  .site-nav {
+    display: none;
+    position: absolute;
+    inset-inline: 0;
+    top: 82px;
+    padding: 12px 22px 22px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 20px 35px #24103a12;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+  }
+  .site-nav--open { display: flex; }
+  .site-nav__link { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .site-nav__link:last-child { border-bottom: 0; }
+}

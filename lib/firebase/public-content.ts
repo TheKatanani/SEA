@@ -1,4 +1,5 @@
 import "server-only";
+import { publicRecord } from "@/lib/public-record";
 
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 
@@ -14,7 +15,7 @@ export async function getPublishedRecords(collection: PublicContentCollection): 
   if (!isFirebaseAdminConfigured()) return [];
   try {
     const snapshot = await getAdminDb().collection(collection).where("status", "==", "published").limit(250).get();
-    return snapshot.docs.map((document) => ({ ...document.data(), id: document.id }));
+    return snapshot.docs.map((document) => (publicRecord({ ...document.data(), id: document.id }) as PublicContentRecord));
   } catch (error) {
     console.error(`Published ${collection} read failed`, error);
     return [];

@@ -51,8 +51,6 @@ export async function requireAdmin(request: NextRequest, allowedRoles?: AdminRol
   let role: AdminRole | undefined;
   if (claims.uid === process.env.FIREBASE_OWNER_UID) {
     role = "owner";
-  } else if (claims.admin === true && typeof claims.role === "string" && ["admin", "editor", "admissions", "media"].includes(claims.role)) {
-    role = claims.role as AdminRole;
   } else {
     const record = await getAdminDb().collection("admins").doc(claims.uid).get();
     const value = record.data();
@@ -66,6 +64,7 @@ export async function requireAdmin(request: NextRequest, allowedRoles?: AdminRol
 export class AdminAuthError extends Error {
   constructor(message: string, public readonly status: number) {
     super(message);
+    this.name = "AdminAuthError";
   }
 }
 

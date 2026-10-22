@@ -17,6 +17,7 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   if (process.env.APPLICATIONS_ENABLED !== "true") return Response.json({ error: "Submissions are not enabled yet" }, { status: 503 });
+  if (!process.env.PRIVACY_POLICY_VERSION || process.env.PRIVACY_POLICY_VERSION === "pending-approval") return Response.json({ error: "Privacy policy is not configured" }, { status: 503 });
   if (!isFirebaseAdminConfigured()) return Response.json({ error: "Application storage is not configured" }, { status: 503 });
   if (!process.env.FIREBASE_RATE_LIMIT_SECRET) return Response.json({ error: "Submission protection is not configured" }, { status: 503 });
   const origin = request.headers.get("origin");

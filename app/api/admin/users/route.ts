@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     if (user.uid === process.env.FIREBASE_OWNER_UID) return Response.json({ error: "The owner account cannot be changed here" }, { status: 400 });
     await auth.setCustomUserClaims(user.uid, { ...user.customClaims, admin: true, role: body.role });
     await getAdminDb().collection("admins").doc(user.uid).set({ email, role: body.role, active: true, updatedAt: FieldValue.serverTimestamp(), updatedBy: owner.uid }, { merge: true });
+    if (!created) await auth.revokeRefreshTokens(user.uid);
     await getAdminDb().collection("audit_logs").add({ action: "admin.role.updated", recordId: user.uid, actorUid: owner.uid, role: body.role, at: FieldValue.serverTimestamp() });
     const inviteLink = created ? await auth.generatePasswordResetLink(email) : undefined;
     return Response.json({ ok: true, inviteLink, created });
@@ -56,6 +57,7 @@ export async function DELETE(request: NextRequest) {
     delete claims.role;
     await auth.setCustomUserClaims(uid, claims);
     await getAdminDb().collection("admins").doc(uid).delete();
+    await auth.revokeRefreshTokens(uid);
     await getAdminDb().collection("audit_logs").add({ action: "admin.role.removed", recordId: uid, actorUid: owner.uid, at: FieldValue.serverTimestamp() });
     return Response.json({ ok: true });
   } catch (error) { return authErrorResponse(error); }

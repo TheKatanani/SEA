@@ -7,6 +7,7 @@ import { ManagedForm } from "@/components/ContactForm";
 import { MotionCard, RevealSection } from "@/components/RevealSection";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { ProgramCard } from "@/components/ProgramCard";
+import { CohortOptions } from "@/components/CohortOptions";
 import { ArrowUpLeft, ArrowUpRight, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
 type Section = { type?: string; collection?: string; recordId?: string; formType?: string; heading?: string; body?: string; imageUrl?: string; imageAlt?: string; buttonLabel?: string; buttonUrl?: string };
@@ -244,10 +245,17 @@ export async function FirestorePage({ path }: { path: string }) {
   }
   await Promise.all([...collectionsNeeded].map(async (collection) => records.set(collection, await getPublishedRecords(collection))));
   const detailRecord = detailPlan?.featuredRecord ? records.get(detailPlan.featuredRecord.collection)?.find((item) => item.id === detailPlan?.featuredRecord?.id || item.slug === detailPlan?.featuredRecord?.id) : null;
+  const bookingOptions = detailRecord && detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection) ? <CohortOptions collection={detailPlan.featuredRecord.collection} programId={detailRecord.id} locale={locale} /> : null;
   if ((result.state === "missing" || !result.page) && !detailRecord && !plan) notFound();
   if (result.state !== "published" || !result.page) {
     const draft = result.state === "draft";
-    if (detailRecord && detailPlan) return <article className="cms-page"><RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />Saudi Entertainment Academy</p><h1>{String(localizedFields(detailRecord, locale).title || detailRecord.title || detailRecord.name || "")}</h1>{detailPlan.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection) && <ActionLinks locale={locale} paths={[{ href: "/apply", label: english ? "Apply now" : "قدّم الآن" }]} />}</div></RevealSection><RouteContent path={path} locale={locale} page={null} plan={detailPlan} data={records} brand={null} /></article>;
+    if (detailRecord && detailPlan) {
+      const isTraining = detailPlan.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection);
+      const detailHeroLinks = isTraining
+        ? [{ href: `#cohorts-${detailRecord.id}`, label: english ? "Dates & Available seats" : "المواعيد والمقاعد المتاحة" }, { href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
+        : [];
+      return <article className="cms-page"><RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />Saudi Entertainment Academy</p><h1>{String(localizedFields(detailRecord, locale).title || detailRecord.title || detailRecord.name || "")}</h1>{detailHeroLinks.length > 0 && <ActionLinks locale={locale} paths={detailHeroLinks} />}</div></RevealSection><RouteContent path={path} locale={locale} page={null} plan={detailPlan} data={records} brand={null} />{bookingOptions}</article>;
+    }
     if (draft) return <div className="cms-state page-shell"><span className="eyebrow"><span className="eyebrow__dot" />SEA</span><h1>{english ? "This page is being reviewed" : "هذه الصفحة قيد المراجعة"}</h1><p>{english ? "The Academy team is preparing the published version." : "يعمل فريق الأكاديمية على تجهيز النسخة المنشورة."}</p><Link className="button button--primary" href="/">{english ? "Back to home" : "العودة للرئيسية"}</Link></div>;
     notFound();
   }
@@ -267,8 +275,13 @@ export async function FirestorePage({ path }: { path: string }) {
     ? <SectionBlock title={english ? "Register your interest" : "سجّل اهتمامك"} className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock>
     : null;
   const brand = path === "/contact" ? await getPublishedBrandRecord() : null;
-  const heroApply = path === "/programs" || Boolean(detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection));
-  return <article className="cms-page">{path === "/" ? <HomeHero locale={locale} title={translation.title} description={typeof translation.description === "string" ? translation.description : ""} items={records.get("gallery") || []} /> : <RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />{english ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</p><h1>{translation.title}</h1>{typeof translation.description === "string" && translation.description && <p>{translation.description}</p>}{heroApply && <ActionLinks locale={locale} paths={[{ href: "/apply", label: english ? "Apply now" : "قدّم الآن" }]} />}</div></RevealSection>}{publishedSections.length ? <>{publishedSections}{requiredFormFallback}</> : <RouteContent path={path} locale={locale} page={result.page as PublicContentRecord} plan={effectivePlan} data={records} brand={brand} />}</article>;
+  const isProgramDetail = Boolean(detailRecord && detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection));
+  const heroLinks = isProgramDetail && detailRecord
+    ? [{ href: `#cohorts-${detailRecord.id}`, label: english ? "Dates & Available seats" : "المواعيد والمقاعد المتاحة" }, { href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
+    : path === "/programs"
+    ? [{ href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
+    : [];
+  return <article className="cms-page">{path === "/" ? <HomeHero locale={locale} title={translation.title} description={typeof translation.description === "string" ? translation.description : ""} items={records.get("gallery") || []} /> : <RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />{english ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</p><h1>{translation.title}</h1>{typeof translation.description === "string" && translation.description && <p>{translation.description}</p>}{heroLinks.length > 0 && <ActionLinks locale={locale} paths={heroLinks} />}</div></RevealSection>}{publishedSections.length ? <>{publishedSections}{requiredFormFallback}</> : <RouteContent path={path} locale={locale} page={result.page as PublicContentRecord} plan={effectivePlan} data={records} brand={brand} />}{bookingOptions}</article>;
 }
 
 export async function getFirestorePageMetadata(path: string, locale: "ar" | "en") {
@@ -277,5 +290,5 @@ export async function getFirestorePageMetadata(path: string, locale: "ar" | "en"
   const translation = (result.page.locales as Record<string, Record<string, unknown>> | undefined)?.[locale];
   const title = typeof translation?.seoTitle === "string" ? translation.seoTitle : typeof translation?.title === "string" ? translation.title : "SEA";
   const description = typeof translation?.seoDescription === "string" ? translation.seoDescription : typeof translation?.description === "string" ? translation.description : undefined;
-  return { title, description, robots: { index: true, follow: true } };
+  return { title, description, alternates: { canonical: (locale === "en" ? "/en" : "") + (path === "/" ? "/" : path), languages: { ar: path, en: "/en" + (path === "/" ? "" : path) } }, robots: { index: true, follow: true } };
 }

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { authErrorResponse, canManageCollection, requireAdmin } from "@/lib/firebase/authorization";
+import { validateCmsRecord } from "@/lib/cms-validation";
 import { FieldValue } from "firebase-admin/firestore";
 import type { NextRequest } from "next/server";
 
@@ -12,7 +13,7 @@ const managedCollections = new Set([
   "policies", "support", "partners", "admissions", "resources", "forms", "brand", "settings", "applications", "employer_inquiries", "contact_inquiries", "audit_logs",
 ]);
 const payloadSchema = z.object({
-  id: z.string().trim().min(1).max(180).optional(),
+  id: z.string().regex(/^[A-Za-z0-9_-]{1,180}$/).optional(),
   data: z.record(z.string(), z.unknown()),
 });
 const submissionCollections = new Set(["applications", "employer_inquiries", "contact_inquiries"]);
@@ -43,7 +44,8 @@ export async function GET(request: NextRequest) {
     const snapshot = ["applications", "employer_inquiries", "contact_inquiries"].includes(collection)
       ? await reference.orderBy("createdAt", "desc").limit(100).get()
       : collection === "audit_logs" ? await reference.orderBy("at", "desc").limit(100).get() : await reference.limit(100).get();
-    return Response.json({ items: snapshot.docs.map((doc) => ({ ...serialize(doc.data()) as object, id: doc.id })) }, { headers: { "Cache-Control": "private, no-store" } });
+    const drafts = !submissionCollections.has(collection) && collection !== "audit_logs" && snapshot.size ? await getAdminDb().getAll(...snapshot.docs.map((doc) => getAdminDb().collection("content_drafts").doc(collection + "__" + doc.id))) : [];
+    return Response.json({ items: snapshot.docs.map((doc, index) => ({ ...serialize(drafts[index]?.exists ? drafts[index].data()?.data : doc.data()) as object, id: doc.id, hasDraft: drafts[index]?.exists || false })) }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return authErrorResponse(error);
   }
@@ -65,20 +67,28 @@ export async function POST(request: NextRequest) {
     const previous = body.id ? await reference.get() : null;
     if (submissionCollections.has(collection) && !previous?.exists) return Response.json({ error: "Requests can only be created through the public form" }, { status: 403 });
     const { id: _recordId, ...recordData } = body.data;
-    let values = recordData;
+    let values: Record<string, unknown> = submissionCollections.has(collection) ? recordData : validateCmsRecord(collection, recordData);
     if (submissionCollections.has(collection)) {
       const status = z.enum(["new", "in_review", "contacted", "accepted", "closed"]).safeParse(recordData.status);
       const internalNotes = z.string().max(4_000).safeParse(recordData.internalNotes ?? "");
       if (!status.success || !internalNotes.success) return Response.json({ error: "Invalid request status or notes" }, { status: 400 });
       values = { status: status.data, internalNotes: internalNotes.data };
     }
-    await reference.set({
-      ...values,
-      createdAt: previous?.exists ? previous.data()?.createdAt ?? FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      updatedBy: identity.uid,
-    }, { merge: true });
-    await db.collection("audit_logs").add({ action: previous?.exists ? "record.updated" : "record.created", collection, recordId: reference.id, actorUid: identity.uid, at: FieldValue.serverTimestamp() });
+    await db.runTransaction(async (tx) => {
+      const current = await tx.get(reference);
+      const draftRef = db.collection("content_drafts").doc(collection + "__" + reference.id);
+      const metadata = { createdAt: current.data()?.createdAt ?? FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), updatedBy: identity.uid };
+      if (!submissionCollections.has(collection) && current.exists) {
+        tx.create(db.collection("content_versions").doc(), { collection, recordId: reference.id, data: current.data(), actorUid: identity.uid, at: FieldValue.serverTimestamp() });
+      }
+      if (!submissionCollections.has(collection) && current.data()?.status === "published" && values.status === "draft") {
+        tx.set(draftRef, { data: { ...current.data(), ...values, ...metadata }, collection, recordId: reference.id });
+      } else {
+        tx.set(reference, { ...values, ...metadata }, { merge: true });
+        if (!submissionCollections.has(collection)) tx.delete(draftRef);
+      }
+      tx.create(db.collection("audit_logs").doc(), { action: current.exists ? "record.updated" : "record.created", collection, recordId: reference.id, actorUid: identity.uid, at: FieldValue.serverTimestamp() });
+    });
     refreshSite(collection);
     return Response.json({ id: reference.id, ok: true });
   } catch (error) {
@@ -92,6 +102,7 @@ export async function DELETE(request: NextRequest) {
     const identity = await requireAdmin(request);
     const collection = request.nextUrl.searchParams.get("collection") || "";
     const id = request.nextUrl.searchParams.get("id") || "";
+    if (collection === "audit_logs") return Response.json({ error: "Audit history is read-only" }, { status: 405 });
     if (!managedCollections.has(collection) || !canManageCollection(identity.role, collection) || !id || id.includes("/")) {
       return Response.json({ error: "Record unavailable" }, { status: 403 });
     }
