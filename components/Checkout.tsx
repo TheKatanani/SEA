@@ -53,10 +53,16 @@ export function Checkout({ cohort, enabled, demo = false }: { cohort: PublicCoho
   const locale = useLocale(); const en = locale === "en"; const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [result, setResult] = useState<BookingResult | null>(null); const [token, setToken] = useState("");
   useEffect(() => {
-    const saved = sessionStorage.getItem("sea-active-" + cohort.id);
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const tokenFromHash = hash.get("token");
+    const saved = search.get("booking") || sessionStorage.getItem("sea-active-" + cohort.id);
     if (!saved) return;
-    const id = saved; const access = sessionStorage.getItem("sea-booking-" + id);
+    const id = saved;
+    const access = sessionStorage.getItem("sea-booking-" + id) || tokenFromHash;
     if (!access) return;
+    sessionStorage.setItem("sea-booking-" + id, access);
+    sessionStorage.setItem("sea-active-" + cohort.id, id);
     fetch("/api/bookings/" + id, { headers: { Authorization: "Bearer " + access }, cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((v) => { if (v?.booking?.status === "PENDING" && v.booking.holdExpiresAt > Date.now()) { setResult(v); setToken(access); } else if (v?.booking?.status === "EXPIRED" || v?.booking?.status === "CANCELLED") { sessionStorage.removeItem("sea-request-" + cohort.id); sessionStorage.removeItem("sea-active-" + cohort.id); } }).catch(() => {});
   }, [cohort.id]);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -99,7 +105,7 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
         if (verify) { const verified = await fetch("/api/bookings/" + encodeURIComponent(booking), { method: "POST", headers: { Authorization: "Bearer " + access, "Content-Type": "application/json" }, body: JSON.stringify({ paymentId: verify }) }); if (!verified.ok) throw new Error("SERVICE_UNAVAILABLE"); verify = null; }
         const response = await fetch("/api/bookings/" + encodeURIComponent(booking), { headers: { Authorization: "Bearer " + access }, cache: "no-store" });
         const body = await response.json(); if (!response.ok) throw new Error(body.error);
-        verify = null; if (!disposed) { setData(body); setError(""); if (body.booking?.status !== "PENDING") clearInterval(timer); }
+        verify = null; if (!disposed) { setData(body); if (body?.cohort?.id) sessionStorage.setItem("sea-active-" + body.cohort.id, booking); setError(""); if (body.booking?.status !== "PENDING") clearInterval(timer); }
       } catch (caught) { if (!disposed) setError(errorLabel(caught instanceof Error ? caught.message : "", en)); }
     };
     void refresh(); const timer = setInterval(() => void refresh(), 5000);
@@ -107,6 +113,6 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
   }, [bookingId, callback, en]);
   const b = data?.booking;
   const states: Record<string, [string, string]> = { PENDING: ["بانتظار اكتمال الدفع", "Awaiting payment"], CONFIRMED: ["تم تأكيد مقعدك", "Your seat is confirmed"], EXPIRED: ["انتهت مهلة الحجز", "Reservation expired"], REFUND_PENDING: ["دفعة تحتاج مراجعة واسترجاع", "Payment awaiting review / refund"], REFUNDED: ["تم استرجاع الدفعة", "Payment refunded"], CANCELLED: ["أُلغي الحجز", "Booking cancelled"] };
-  return <div className="booking-receipt page-shell"><div className="content-panel"><p className="eyebrow">SEA · {en ? "Booking status" : "حالة الحجز"}</p><h1 aria-live="polite">{b ? states[b.status]?.[en ? 1 : 0] || b.status : en ? "Checking your booking…" : "جارٍ التحقق من الحجز…"}</h1>{error && <p className="training-alert" role="alert">{error}</p>}{b && data && <><p className="receipt-number" dir="ltr">{b.bookingNumber}</p><h2>{b.fullName}</h2><p>{en ? data.cohort.titleEn : data.cohort.titleAr}</p><dl className="training-facts"><div><dt>{en ? "Amount" : "المبلغ"}</dt><dd>{new Intl.NumberFormat(en ? "en-SA" : "ar-SA", { style: "currency", currency: b.currency }).format(b.amountMinor / 100)}</dd></div><div><dt>{en ? "Starts" : "بداية البرنامج"}</dt><dd>{new Intl.DateTimeFormat(en ? "en" : "ar", { dateStyle: "long", timeZone: "Asia/Riyadh" }).format(new Date(data.cohort.startAt))}</dd></div><div><dt>{en ? "Location" : "الموقع"}</dt><dd>{en ? data.cohort.venueEn : data.cohort.venueAr}</dd></div><div><dt>{en ? "Schedule" : "الجدول"}</dt><dd>{en ? data.cohort.scheduleEn : data.cohort.scheduleAr}</dd></div></dl>{b.status === "CONFIRMED" && <button className="button button--primary no-print" onClick={() => window.print()}>{en ? "Print receipt" : "طباعة الإيصال"}</button>}{b.status === "PENDING" && <Link className="button button--primary" href={"/checkout/" + data.cohort.id}>{en ? "Continue payment" : "متابعة الدفع"}</Link>}{callback && <Link className="text-link" href={"/booking/confirmation/" + id + "#token=" + token}>{en ? "Keep this booking link" : "احتفظ برابط حجزك"}</Link>}</>}<Link className="text-link no-print" href="/programs">{en ? "Back to programs" : "العودة للبرامج"}</Link></div></div>;
+  return <div className="booking-receipt page-shell"><div className="content-panel"><p className="eyebrow">SEA · {en ? "Booking status" : "حالة الحجز"}</p><h1 aria-live="polite">{b ? states[b.status]?.[en ? 1 : 0] || b.status : en ? "Checking your booking…" : "جارٍ التحقق من الحجز…"}</h1>{error && <p className="training-alert" role="alert">{error}</p>}{b && data && <><p className="receipt-number" dir="ltr">{b.bookingNumber}</p><h2>{b.fullName}</h2><p>{en ? data.cohort.titleEn : data.cohort.titleAr}</p><dl className="training-facts"><div><dt>{en ? "Amount" : "المبلغ"}</dt><dd>{new Intl.NumberFormat(en ? "en-SA" : "ar-SA", { style: "currency", currency: b.currency }).format(b.amountMinor / 100)}</dd></div><div><dt>{en ? "Starts" : "بداية البرنامج"}</dt><dd>{new Intl.DateTimeFormat(en ? "en" : "ar", { dateStyle: "long", timeZone: "Asia/Riyadh" }).format(new Date(data.cohort.startAt))}</dd></div><div><dt>{en ? "Location" : "الموقع"}</dt><dd>{en ? data.cohort.venueEn : data.cohort.venueAr}</dd></div><div><dt>{en ? "Schedule" : "الجدول"}</dt><dd>{en ? data.cohort.scheduleEn : data.cohort.scheduleAr}</dd></div></dl>{b.status === "CONFIRMED" && <button className="button button--primary no-print" onClick={() => window.print()}>{en ? "Print receipt" : "طباعة الإيصال"}</button>}{b.status === "PENDING" && <Link className="button button--primary" href={"/checkout/" + data.cohort.id + (token ? "#token=" + token : "")}>{en ? "Continue payment" : "متابعة الدفع"}</Link>}{callback && <Link className="text-link" href={"/booking/confirmation/" + id + "#token=" + token}>{en ? "Keep this booking link" : "احتفظ برابط حجزك"}</Link>}</>}<Link className="text-link no-print" href="/programs">{en ? "Back to programs" : "العودة للبرامج"}</Link></div></div>;
 }
 
