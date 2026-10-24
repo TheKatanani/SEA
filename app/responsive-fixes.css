@@ -20,3 +20,42 @@
   .site-nav__link { padding: 12px 0; border-bottom: 1px solid var(--line); }
   .site-nav__link:last-child { border-bottom: 0; }
 }
+
+/* Button resets and form success styling */
+button.text-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.form-success {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.form-success__icon {
+  color: #10b981;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.form-success h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.form-success p {
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 20px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.form-success .button {
+  margin-top: 8px;
+}

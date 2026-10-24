@@ -42,7 +42,7 @@ function UiOnlyForm({ title, description, fields, formType, buttonLabel = "إر�
     }
   }
 
-  if (status === "success") return <div className="form-success" role="status"><span className="form-success__icon"><CheckCircle2 size={28} /></span><h3>{t("success")}</h3><p>{t("successDescription")}</p><button className="text-link" type="button" onClick={() => setStatus("idle")}>{t("another")}</button></div>;
+  if (status === "success") return <div className="form-success" role="status"><span className="form-success__icon"><CheckCircle2 size={36} /></span><h3>{t("success")}</h3><p>{t("successDescription")}</p><button className="button button--primary" type="button" onClick={() => setStatus("idle")}>{t("another")}</button></div>;
 
   return <form className={`form-grid ${english ? "form-grid--english" : ""}`} onSubmit={submit}>
     <h2 className="form-title form-field--full">{title}</h2>
