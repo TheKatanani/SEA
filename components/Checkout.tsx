@@ -74,12 +74,17 @@ function PaymentForm({ data, token, locale }: { data: BookingResult; token: stri
 
   if (remaining === 0 || b.status !== "PENDING") {
     return (
-      <div className="training-alert">
-        <h3>{en ? "The reservation has expired" : "انتهت مهلة الحجز"}</h3>
-        <p>{en ? "Choose an available seat again. A late payment will be reviewed by the Academy." : "اختر مقعداً متاحاً من جديد. أي دفع متأخر ستراجعه الأكاديمية."}</p>
-        <Link href="/programs" className="button button--primary">
-          {en ? "Programs" : "البرامج"}
-        </Link>
+      <div className="training-alert training-alert--warning" role="alert">
+        <Clock size={24} className="training-alert__icon" aria-hidden="true" />
+        <div className="training-alert__content">
+          <h3>{en ? "The reservation has expired" : "انتهت مهلة الحجز المؤقت"}</h3>
+          <p>{en ? "Choose an available seat again. A late payment will be reviewed by the Academy." : "اختر مقعداً متاحاً من جديد. أي دفع متأخر ستراجعه الأكاديمية."}</p>
+          <div style={{ marginTop: "10px" }}>
+            <Link href="/programs" className="button button--primary">
+              {en ? "Browse Programs" : "استعراض البرامج"}
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,7 +107,14 @@ function PaymentForm({ data, token, locale }: { data: BookingResult; token: stri
 
       <link rel="stylesheet" href="https://cdn.moyasar.com/mpf/1.15.0/moyasar.css" />
       <Script src="https://cdn.moyasar.com/mpf/1.15.0/moyasar.js" onReady={() => setReady(true)} onError={() => setError(true)} />
-      {error && <p role="alert" className="training-alert">{en ? "Payment form could not be loaded. Please refresh." : "تعذر تحميل نموذج الدفع. يرجى تحديث الصفحة."}</p>}
+      {error && (
+        <div className="training-alert training-alert--error" role="alert">
+          <AlertCircle size={20} className="training-alert__icon" aria-hidden="true" />
+          <div className="training-alert__content">
+            <p>{en ? "Payment form could not be loaded. Please refresh." : "تعذر تحميل نموذج الدفع. يرجى تحديث الصفحة."}</p>
+          </div>
+        </div>
+      )}
       <div ref={paymentElement} className="sea-payment" />
       <Link className="text-link" href={"/booking/confirmation/" + b.id + "#token=" + token}>
         {en ? "Check booking status" : "متابعة حالة الحجز"}
@@ -247,12 +259,27 @@ export function Checkout({ cohort, enabled, demo = false }: { cohort: PublicCoho
                 </span>
               </label>
 
+              {error && (
+                <div className="training-alert training-alert--error" role="alert">
+                  <AlertCircle size={22} className="training-alert__icon" aria-hidden="true" />
+                  <div className="training-alert__content">
+                    <strong>{en ? "Registration Notice" : "تنبيه أثناء التسجيل"}</strong>
+                    <p>{error}</p>
+                    {(error.includes("مسجل بالفعل") || error.includes("already registered")) && (
+                      <span className="training-alert__hint">
+                        {en
+                          ? "This learner has already secured a seat in this cohort. Only 1 seat per National ID is allowed."
+                          : "تم تأكيد مقعد لهذا المتدرب بالفعل في هذه الدفعة. يُسمح بمقعد واحد فقط لكل رقم هوية وطنية."}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <button className="button button--primary" disabled={busy}>
                 {busy ? (en ? "Reserving seat…" : "جارٍ حفظ المقعد…") : en ? "Reserve Seat & Proceed to Payment" : "احفظ المقعد وانتقل للدفع"}
                 {en ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
               </button>
-
-              {error && <p className="training-alert" role="alert">{error}</p>}
             </form>
           )}
         </section>
@@ -381,7 +408,15 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
           )}
         </div>
 
-        {error && <p className="training-alert" role="alert">{error}</p>}
+        {error && (
+          <div className="training-alert training-alert--error" role="alert">
+            <AlertCircle size={22} className="training-alert__icon" aria-hidden="true" />
+            <div className="training-alert__content">
+              <strong>{en ? "Booking Error" : "تنبيه الحجز"}</strong>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
 
         {b && data && (
           <>

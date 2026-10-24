@@ -249,3 +249,103 @@ button.text-link {
   line-height: 1.6;
   color: #64748b;
 }
+
+/* Eye-Catching Training Alerts */
+.training-alert {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+  padding: 16px 20px !important;
+  border-radius: 14px !important;
+  margin: 16px 0 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background: #fff1f2 !important;
+  border: 1.5px solid #fecdd3 !important;
+  border-inline-start: 6px solid #e11d48 !important;
+  color: #881337 !important;
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.12) !important;
+  animation: alertPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes alertPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.training-alert--error {
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  border-inline-start-color: #e11d48 !important;
+  color: #881337 !important;
+}
+
+.training-alert--warning {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  border-inline-start-color: #f59e0b !important;
+  color: #92400e !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.12) !important;
+}
+
+.training-alert__icon {
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+}
+
+.training-alert--error .training-alert__icon,
+.training-alert .training-alert__icon {
+  color: #e11d48 !important;
+}
+
+.training-alert--warning .training-alert__icon {
+  color: #f59e0b !important;
+}
+
+.training-alert__content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  flex: 1 !important;
+}
+
+.training-alert__content strong,
+.training-alert__content h3 {
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+.training-alert--error .training-alert__content strong,
+.training-alert--error .training-alert__content h3,
+.training-alert .training-alert__content strong,
+.training-alert .training-alert__content h3 {
+  color: #9f1239 !important;
+}
+
+.training-alert--warning .training-alert__content strong,
+.training-alert--warning .training-alert__content h3 {
+  color: #b45309 !important;
+}
+
+.training-alert__content p {
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+
+.training-alert__hint {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin-top: 6px !important;
+  padding-top: 6px !important;
+  border-top: 1px dashed rgba(225, 29, 72, 0.25) !important;
+  color: #9f1239 !important;
+}
