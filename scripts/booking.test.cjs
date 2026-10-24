@@ -20,11 +20,12 @@ class MemoryQuery {
   startAfter(cursor) { return new MemoryQuery(this.db, this.name, this.filters, this.order, this.cap, cursor); }
   async get() {
     let docs = [...this.db.rows.keys()].filter(k => k.startsWith(this.name + "/")).map(k => this.db.snapshot(k)).filter(doc => this.filters.every(([key, op, value]) => {
-      const actual = doc.data()[key]; return op === "==" ? actual === value : op === "array-contains" ? actual?.includes(value) : op === "<=" ? actual <= value : op === ">" ? actual > value : op === "in" ? value.includes(actual) : false;
+      const actual = key.includes(".") ? key.split(".").reduce((acc, part) => acc?.[part], doc.data()) : doc.data()[key];
+      return op === "==" ? actual === value : op === "array-contains" ? actual?.includes(value) : op === "<=" ? actual <= value : op === ">" ? actual > value : op === "in" ? value.includes(actual) : false;
     }));
     if (this.order) { const [key, dir] = this.order; docs.sort((a,b) => { const x=a.data()[key], y=b.data()[key]; return ((x<y?-1:x>y?1:0) * (dir==="desc"?-1:1)) || a.id.localeCompare(b.id); }); }
     if (this.cursor) docs = docs.slice(docs.findIndex(d=>d.id===this.cursor.id)+1);
-    docs = docs.slice(0,this.cap); return { docs, size: docs.length };
+    docs = docs.slice(0,this.cap); return { docs, size: docs.length, empty: docs.length === 0 };
   }
 }
 class MemoryDb {
@@ -41,7 +42,7 @@ class MemoryDb {
     const operation = this.queue.then(async () => {
       const writes = []; let writing = false;
       const tx = {
-        get: async (ref) => { assert.equal(writing, false, "Firestore requires all reads before writes"); return this.snapshot(ref.key); },
+        get: async (ref) => { assert.equal(writing, false, "Firestore requires all reads before writes"); return ref.key ? this.snapshot(ref.key) : ref.get(); },
         set: (ref, value, options) => { writing = true; writes.push(() => this.set(ref.key, value, options)); },
         update: (ref, value) => { writing = true; writes.push(() => this.set(ref.key, value, { merge: true })); },
         create: (ref, value) => { writing = true; if (this.rows.has(ref.key)) throw new Error("already exists"); writes.push(() => this.set(ref.key, value)); },
@@ -96,6 +97,14 @@ test("repeated request key returns the same booking without another seat", async
   reset(2); const results = await Promise.all(Array.from({ length: 8 }, () => book("same-key")));
   assert.equal(new Set(results.map((r) => r.booking.id)).size, 1);
   assert.equal(Object.keys(db.rows.get("cohorts/cohort-one").holds).length, 1);
+});
+test("attendee with confirmed seat in a cohort cannot reserve another seat in that cohort", async () => {
+  reset(5); const b = await book("first-booking");
+  await service.settlePayment(payment(b.booking), "event-confirmed");
+  await assert.rejects(
+    () => service.createBooking("cohort-one", "second-req", b.booking.attendee, "ar", "127.0.0.1"),
+    (err) => err.code === "ALREADY_REGISTERED" && err.status === 409
+  );
 });
 test("expired hold is reusable and late payment goes to refund review", async () => {
   reset(); const first = await book("first"); now += domain.HOLD_MS + 1;

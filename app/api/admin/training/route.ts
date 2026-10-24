@@ -23,12 +23,26 @@ export async function GET(request: NextRequest) {
     }
     if (request.nextUrl.searchParams.get("overview") === "true") {
       const db = getAdminDb();
-      const [cohorts, confirmed, pending, revenue] = await Promise.all([
-        db.collection("cohorts").count().get(), db.collection("bookings").where("status", "==", "CONFIRMED").count().get(),
-        db.collection("bookings").where("status", "==", "PENDING").where("holdExpiresAt", ">", Date.now()).count().get(),
-        db.collection("payments").where("status", "in", ["paid", "captured", "refunded"]).where("refundRequired", "==", false).aggregate({ amount: AggregateField.sum("amountMinor"), refunded: AggregateField.sum("refundedMinor") }).get(),
-      ]);
-      return Response.json({ cohorts: cohorts.data().count, confirmed: confirmed.data().count, pending: pending.data().count, revenueMinor: revenue.data().amount - revenue.data().refunded }, { headers: { "Cache-Control": "private, no-store" } });
+      try {
+        const [cohorts, confirmedBookings, pendingCount] = await Promise.all([
+          db.collection("cohorts").count().get(),
+          db.collection("bookings").where("status", "==", "CONFIRMED").get(),
+          db.collection("bookings").where("status", "==", "PENDING").count().get(),
+        ]);
+        let revenueMinor = 0;
+        confirmedBookings.forEach((doc) => {
+          revenueMinor += (doc.data().amountMinor as number) || 0;
+        });
+        return Response.json({
+          cohorts: cohorts.data().count,
+          confirmed: confirmedBookings.size,
+          pending: pendingCount.data().count,
+          revenueMinor,
+        }, { headers: { "Cache-Control": "private, no-store" } });
+      } catch (err) {
+        console.error("Overview error", err);
+        return Response.json({ cohorts: 0, confirmed: 0, pending: 0, revenueMinor: 0 }, { headers: { "Cache-Control": "private, no-store" } });
+      }
     }
     if (request.nextUrl.searchParams.has("cohortId") && !request.nextUrl.searchParams.has("collection")) return Response.json({ cohort: publicCohort(await getCohort(idSchema.parse(request.nextUrl.searchParams.get("cohortId")))) });
     const { collection, query: base } = trainingQuery(request);

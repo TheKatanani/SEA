@@ -56,6 +56,8 @@ export async function createBooking(cohortId: string, requestKey: string, attend
     const cohort = cohortDoc.data() as Cohort;
     const program = await tx.get(db.collection(cohort.programCollection).doc(cohort.programId));
     if (program.data()?.status !== "published") throw new BookingError("PROGRAM_NOT_PUBLISHED", 404);
+    const existingConfirmed = await tx.get(db.collection("bookings").where("cohortId", "==", cohortId).where("attendee.nationalId", "==", attendee.nationalId.trim()).where("status", "==", "CONFIRMED").limit(1));
+    if (!existingConfirmed.empty) throw new BookingError("ALREADY_REGISTERED", 409);
     const now = Date.now();
     const limit = limiter.data();
     if (limit && limit.until > now && limit.count >= 6) throw new BookingError("TOO_MANY_REQUESTS", 429);

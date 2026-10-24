@@ -12,6 +12,7 @@ const labels: Record<string, [string, string]> = {
   INVALID_BOOKING_DETAILS: ["راجع الاسم الرباعي والهوية والجوال والبريد.", "Please check your full name, ID, mobile and email."],
   TOO_MANY_REQUESTS: ["محاولات كثيرة. يرجى المحاولة لاحقاً.", "Too many attempts. Please try again later."],
   BOOKING_ACCESS_DENIED: ["تعذر التحقق من رابط الحجز. افتح الرابط الأصلي.", "This booking link could not be verified. Please use the original link."],
+  ALREADY_REGISTERED: ["أنت مسجل بالفعل في هذه الدفعة برقم الهوية المدخل.", "You are already registered in this cohort with this National ID."],
 };
 function errorLabel(code: string, en: boolean) { return labels[code]?.[en ? 1 : 0] || (en ? "The service is temporarily unavailable. Please contact the Academy." : "الخدمة غير متاحة مؤقتاً. يرجى التواصل مع الأكاديمية."); }
 
