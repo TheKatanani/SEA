@@ -25,7 +25,12 @@ export async function saveCohort(input: CohortInput, actor: string) {
     const previous = await tx.get(ref);
     const program = await tx.get(db.collection(parsed.programCollection).doc(parsed.programId));
     const code = await tx.get(codeRef);
-    if (code.exists && code.data()?.cohortId !== ref.id) throw new BookingError("COHORT_CODE_EXISTS", 409);
+    if (code.exists && code.data()?.cohortId !== ref.id) {
+      const existingCohortDoc = await tx.get(db.collection("cohorts").doc(code.data().cohortId));
+      if (existingCohortDoc.exists) {
+        throw new BookingError("COHORT_CODE_EXISTS", 409);
+      }
+    }
     if (!program.exists || (parsed.status === "published" && program.data()?.status !== "published")) throw new BookingError("PROGRAM_NOT_PUBLISHED", 400);
     const now = Date.now();
     const old = previous.data() as Cohort | undefined;

@@ -101,18 +101,51 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
     const programTitleAr = locales?.ar?.title || String(program.title || program.id);
     const programTitleEn = locales?.en?.title || String(program.name || program.title || program.id);
 
-    // Calculate cohort count for this program to set sequential ordinal
-    const existing = allCohorts.filter(
+    // Combine all known existing cohorts across both allCohorts state and items list
+    const combined = [
+      ...allCohorts,
+      ...(collection === "cohorts" ? items : []),
+    ];
+
+    // Build set of all taken cohort codes (uppercase)
+    const takenCodes = new Set(
+      combined
+        .map((c) => String(c.cohortCode || "").trim().toUpperCase())
+        .filter(Boolean)
+    );
+
+    // Filter existing cohorts for this specific program
+    const forThisProgram = combined.filter(
       (c) => String(c.programId) === programId || (c.programCollection === programCollection && String(c.programId) === programId)
     );
-    const cohortNum = existing.length + 1;
-    const arabicOrdinals = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة"];
-    const ordinalAr = arabicOrdinals[cohortNum - 1] || `رقم ${cohortNum}`;
 
-    // Derive concise cohort code (e.g. course-crowd -> CRD-01)
+    // Derive concise cohort code prefix (e.g. course-crowd -> CRD, course-events -> EVT)
     const baseCode = programId.replace(/^(course|program)-/, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     const prefix = baseCode.slice(0, 3) || "SEA";
-    const cohortCode = `${prefix}-0${cohortNum}`;
+
+    // Find highest cohort number used for this program or prefix
+    let maxNum = forThisProgram.length;
+    for (const c of combined) {
+      const code = String(c.cohortCode || "").toUpperCase();
+      if (code.startsWith(prefix)) {
+        const matches = code.match(/\d+/g);
+        if (matches) {
+          const num = parseInt(matches[matches.length - 1], 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      }
+    }
+
+    // Determine candidate number, ensuring no collision with existing codes
+    let candidateNum = maxNum + 1;
+    let candidateCode = candidateNum < 10 ? `${prefix}-0${candidateNum}` : `${prefix}-${candidateNum}`;
+    while (takenCodes.has(candidateCode) || takenCodes.has(`${candidateCode}-01`)) {
+      candidateNum++;
+      candidateCode = candidateNum < 10 ? `${prefix}-0${candidateNum}` : `${prefix}-${candidateNum}`;
+    }
+
+    const arabicOrdinals = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة", "الحادية عشرة", "الثانية عشرة"];
+    const ordinalAr = arabicOrdinals[candidateNum - 1] || `رقم ${candidateNum}`;
 
     // Target start date: next Sunday at 09:00 AM Riyadh time
     const targetStart = new Date();
@@ -132,9 +165,9 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       id: current.id || "",
       programCollection,
       programId,
-      cohortCode: current.cohortCode && current.id ? current.cohortCode : cohortCode,
+      cohortCode: current.cohortCode && current.id ? current.cohortCode : candidateCode,
       titleAr: `الدفعة ${ordinalAr} - ${programTitleAr}`,
-      titleEn: `Cohort ${cohortNum} - ${programTitleEn}`,
+      titleEn: `Cohort ${candidateNum} - ${programTitleEn}`,
       price: current.price || (setup?.demo ? "1" : "1500"),
       capacity: current.capacity || "25",
       start: current.start || startIso,
@@ -150,8 +183,8 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
 
     setNotice(
       en
-        ? `✨ Auto-filled data for "${programTitleEn}". You can edit any field before saving.`
-        : `✨ تم تعبئة البيانات المقترحة تلقائياً لـ "${programTitleAr}". يمكنك تعديل أي حقل قبل الحفظ.`
+        ? `✨ Auto-filled data for "${programTitleEn}" (Code: ${candidateCode}). You can edit any field before saving.`
+        : `✨ تم تعبئة البيانات المقترحة تلقائياً لـ "${programTitleAr}" (الرمز: ${candidateCode}). يمكنك تعديل أي حقل قبل الحفظ.`
     );
   }
 
@@ -161,7 +194,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
     setError("");
     setNotice("");
     try {
-      await request("/api/admin/training", {
+      const res = await request("/api/admin/training", {
         method: "POST",
         body: JSON.stringify({
           ...(form.id ? { id: form.id } : {}),
@@ -186,6 +219,13 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
         }),
       });
       setNotice(en ? "Cohort saved successfully" : "حُفظت الدفعة بنجاح");
+      const savedCode = form.cohortCode;
+      const savedProg = form.programId;
+      const savedCol = form.programCollection;
+      setAllCohorts((prev) => [
+        ...prev,
+        { id: res?.id || String(Date.now()), cohortCode: savedCode, programId: savedProg, programCollection: savedCol }
+      ]);
       setForm(empty);
       await load();
       request("/api/admin/training?collection=cohorts").then((r) => {
