@@ -1,6 +1,711 @@
-.training-options{padding-block:52px 72px}.training-section-heading{max-width:760px;margin-bottom:28px}.training-section-heading h1{font-size:clamp(28px,4.5vw,48px);line-height:1.4}.training-section-heading h2{font-size:clamp(24px,3.2vw,36px)}.training-section-heading p{color:var(--muted)}.cohort-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px}.cohort-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:12px;min-width:0}.cohort-card h3{margin:4px 0;font-size:21px}.cohort-card__top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.cohort-card__top small{color:var(--muted)}.seat-badge{background:#e7f5ee;color:#176047;display:inline-flex;padding:7px 12px;border-radius:30px;font-size:12px;font-weight:700;align-self:flex-start}.seat-badge--full{background:#f6e9e9;color:#913d3d}.cohort-price{font-size:30px;color:var(--brand-primary,#087180);line-height:1.6}.training-facts{margin:6px 0;display:grid;gap:14px}.training-facts>div{display:grid;gap:3px}.training-facts dt{font-size:12px;color:var(--muted)}.training-facts dd{margin:0;line-height:1.8;overflow-wrap:anywhere}.seat-track{height:5px;background:#edf1f1;border-radius:10px;overflow:hidden;margin-top:auto}.seat-track span{display:block;height:100%;background:var(--brand-primary,#087180)}.training-note{color:var(--muted);font-size:13px;line-height:1.8}.training-disabled{background:#edf0f1;color:#6b747b;cursor:not-allowed;box-shadow:none}.training-empty{border:1px dashed var(--line);border-radius:18px;padding:30px;background:#fff}.training-alert{padding:15px 18px;border:1px solid #ead8cb;background:#fff6ee;border-radius:12px;color:#70452a;line-height:1.9;overflow-wrap:anywhere}.checkout-shell{padding-block:48px 80px}.checkout-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.85fr);gap:30px;align-items:start}.checkout-summary{position:sticky;top:105px}.training-form{display:grid;gap:18px}.training-form h2{margin:0 0 5px}.training-form label{display:grid;gap:8px;font-size:14px}.training-form input,.training-form select,.training-toolbar input,.training-toolbar select{width:100%;min-width:0;border:1px solid #d9e1e2;border-radius:10px;padding:12px 14px;background:#fff;color:#1b3341;font:inherit}.training-form input:focus,.training-form select:focus,.training-toolbar input:focus{outline:3px solid #08718030;outline-offset:2px;border-color:#087180}.training-form label.training-consent{display:flex;align-items:flex-start;gap:12px;font-size:13px;line-height:1.9}.training-consent input{width:18px;height:18px;flex:0 0 auto;margin-top:4px}.training-consent a{color:#087180;text-decoration:underline}.hold-clock{display:flex;gap:18px;align-items:center;justify-content:space-between;padding:16px;background:#e9f4f2;border-radius:12px}.hold-clock strong{font-size:26px;font-variant-numeric:tabular-nums}.payment-panel{display:grid;gap:18px}.payment-panel h2{margin:0}.booking-receipt{max-width:800px;padding-block:70px}.booking-receipt>.content-panel{display:grid;gap:14px;border-top:5px solid #087180}.booking-receipt h1{font-size:30px}.receipt-number{font:700 17px monospace;color:#087180}.training-admin{padding:20px;min-width:0}.training-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}.training-metrics article{display:grid;gap:8px;padding:20px;border:1px solid #e1e7e8;background:#fff;border-radius:14px}.training-metrics span{font-size:12px;color:#647285}.training-metrics strong{font-size:28px}.training-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ddd;padding-bottom:15px;margin-bottom:20px}.training-tabs button,.training-toolbar button,.training-table button,.training-admin>button{border:1px solid #d8e1e2;border-radius:8px;padding:10px 15px;background:#fff;cursor:pointer;font:inherit}.training-tabs button.is-active{background:#087180;color:#fff;border-color:#087180}.training-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px}.training-toolbar form{display:flex;gap:8px;flex:1;min-width:220px}.training-toolbar select{width:auto}.training-table-wrap{max-width:100%;overflow:auto;border:1px solid #e0e6e6;border-radius:12px;background:#fff}.training-table{width:100%;border-collapse:collapse;min-width:650px;text-align:start;font-size:13px}.training-table th,.training-table td{text-align:start;border-bottom:1px solid #e5e9e9;padding:15px;max-width:260px;overflow-wrap:anywhere}.training-table th{background:#f2f6f5;font-weight:700}.training-table small{display:block;color:#6b7880;margin-top:5px}.training-table td>strong{display:block}.cohort-editor{background:#fff;border:1px solid #e0e7e7;border-radius:15px;padding:25px;margin-top:28px}.training-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.training-console-header{display:flex;align-items:center;gap:20px;padding:20px;background:#fff;border-bottom:1px solid #e0e7e7}.training-console-header h1{font-size:22px;margin:0}.training-console-header button{border:1px solid #ddd;padding:10px;border-radius:8px;background:white;cursor:pointer}.training-admin button:disabled{opacity:.55;cursor:wait}
-@media(max-width:760px){.checkout-grid{grid-template-columns:1fr}.checkout-summary{position:static;grid-row:1}.training-options{padding-block:32px 48px}.cohort-card{padding:20px}.checkout-shell{padding-block:30px 50px}.training-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.training-admin{padding:12px}.training-input-grid{grid-template-columns:1fr}.cohort-editor{padding:18px}.training-toolbar{align-items:stretch}.training-toolbar form{min-width:0;flex-basis:100%}.training-console-header{flex-wrap:wrap;gap:10px}.booking-receipt{padding-block:35px}.hold-clock{flex-wrap:wrap}.training-form .button{width:100%}}@media print{.site-header,.site-footer,.no-print,.text-link{display:none!important}.booking-receipt{padding:0;max-width:none}.booking-receipt>.content-panel{border:0;box-shadow:none}.booking-receipt h1{font-size:24px}}
+/* Saudi Entertainment Academy (SEA) - Training, Checkout & Admin Styles */
 
+:root {
+  --sea-primary: #087180;
+  --sea-primary-hover: #065b67;
+  --sea-purple: #5410a5;
+  --sea-purple-hover: #6a1bbd;
+  --sea-gold: #c8932e;
+  --sea-surface: #f9fbfa;
+  --sea-card-border: #e2e8ea;
+}
 
-.training-toolbar form{flex-wrap:wrap}.training-toolbar form input{flex:1;min-width:150px}.training-table td button+button{margin-inline-start:6px}
-.booking-steps{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-wrap:wrap;gap:14px 28px}.booking-steps li{display:flex;align-items:center;gap:9px;font-size:14px}.booking-steps li>span{display:grid;place-items:center;border-radius:50%;width:28px;height:28px;background:var(--primary,#087180);color:#fff;font-weight:700}.training-demo-note{padding:15px 18px;border:1px solid #e7bc5a;border-radius:12px;background:#fff7df;color:#704d0a;margin-block:0 22px;line-height:1.9}.training-setup{padding:20px;border:1px solid #d8e3e4;border-radius:14px;background:#fff;margin-bottom:22px}.training-setup h2{font-size:18px;margin:0 0 10px}.training-setup ul{padding-inline-start:22px}.training-setup code{direction:ltr;unicode-bidi:embed;overflow-wrap:anywhere}
+/* ------------------------------------------------------------- */
+/* Cohorts & Booking Options (Program Details)                   */
+/* ------------------------------------------------------------- */
+.training-options {
+  padding-block: 56px 80px;
+}
+
+.training-section-heading {
+  max-width: 760px;
+  margin-bottom: 32px;
+}
+.training-section-heading h1 {
+  font-size: clamp(28px, 4.5vw, 46px);
+  line-height: 1.35;
+  margin: 6px 0 12px;
+}
+.training-section-heading h2 {
+  font-size: clamp(24px, 3.2vw, 36px);
+  line-height: 1.35;
+  margin: 6px 0 12px;
+}
+.training-section-heading p {
+  color: var(--muted, #64748b);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.booking-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 36px;
+}
+.booking-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+.booking-steps li > span {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  background: var(--sea-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(8, 113, 128, 0.25);
+}
+
+.cohort-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 26px;
+}
+
+.cohort-card {
+  background: #ffffff;
+  border: 1px solid var(--sea-card-border);
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+}
+.cohort-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.cohort-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.seat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.seat-badge--full {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+.seat-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cohort-code-badge {
+  font-family: monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+}
+
+.cohort-card h3 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.45;
+}
+
+.cohort-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+.cohort-price {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--sea-primary);
+  line-height: 1.1;
+}
+.cohort-price-vat {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.training-facts {
+  margin: 6px 0;
+  display: grid;
+  gap: 12px;
+  background: #f8fafb;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #edf2f3;
+}
+.training-facts > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.training-facts__icon {
+  color: var(--sea-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.training-facts dt {
+  font-size: 12px;
+  color: #64748b;
+  min-width: 65px;
+}
+.training-facts dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.seat-track-wrap {
+  margin-top: auto;
+  padding-top: 8px;
+}
+.seat-track {
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.seat-track span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #087180, #10b981);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+.seat-track-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ------------------------------------------------------------- */
+/* Checkout & Payment Form                                       */
+/* ------------------------------------------------------------- */
+.checkout-shell {
+  padding-block: 48px 84px;
+}
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr);
+  gap: 34px;
+  align-items: start;
+}
+.checkout-summary {
+  position: sticky;
+  top: 105px;
+  background: #ffffff;
+  border: 1px solid var(--sea-card-border);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+}
+
+.hold-clock {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdfa);
+  border: 1px solid #a7f3d0;
+  border-radius: 14px;
+  color: #065f46;
+  margin-bottom: 22px;
+}
+.hold-clock__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.hold-clock strong {
+  font-size: 26px;
+  font-family: monospace;
+  font-variant-numeric: tabular-nums;
+  color: #047857;
+  letter-spacing: 1px;
+}
+
+.training-form {
+  display: grid;
+  gap: 18px;
+}
+.training-form h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+.training-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+.training-form input,
+.training-form select,
+.training-toolbar input,
+.training-toolbar select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 13px 16px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.training-form input:focus,
+.training-form select:focus,
+.training-toolbar input:focus {
+  outline: none;
+  border-color: var(--sea-primary);
+  box-shadow: 0 0 0 3px rgba(8, 113, 128, 0.15);
+}
+
+.payment-panel {
+  display: grid;
+  gap: 20px;
+}
+.payment-panel h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.sea-payment {
+  background: #ffffff;
+  padding: 6px 0;
+  border-radius: 12px;
+}
+
+/* ------------------------------------------------------------- */
+/* Official Digital Receipt / Invoice (Official Certificate Look) */
+/* ------------------------------------------------------------- */
+.booking-receipt {
+  max-width: 820px;
+  margin-inline: auto;
+  padding-block: 50px 80px;
+}
+.receipt-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+.receipt-card__top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #087180 0%, #5410a5 100%);
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 28px;
+}
+.receipt-brand h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.receipt-brand p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.official-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px dashed #059669;
+  color: #059669;
+  background: #ecfdf5;
+  transform: rotate(-2deg);
+}
+
+.receipt-number-badge {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--sea-primary);
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.receipt-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-block: 24px;
+  background: #f8fafc;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+.receipt-fact {
+  display: grid;
+  gap: 4px;
+}
+.receipt-fact dt {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+.receipt-fact dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ------------------------------------------------------------- */
+/* Executive Admin Console & Metrics Dashboard                    */
+/* ------------------------------------------------------------- */
+.training-admin {
+  padding: 24px 0;
+  min-width: 0;
+}
+
+.training-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.training-metrics article {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 24px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.training-metrics article:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+.metric-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.metric-icon-wrap--cohorts { background: #e0f2fe; color: #0284c7; }
+.metric-icon-wrap--confirmed { background: #dcfce7; color: #16a34a; }
+.metric-icon-wrap--pending { background: #fef3c7; color: #d97706; }
+.metric-icon-wrap--revenue { background: #ede9fe; color: #7c3aed; }
+
+.metric-body {
+  display: grid;
+  gap: 2px;
+}
+.metric-body span {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+.metric-body strong {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+/* Segmented Tabs Navigation */
+.training-tabs {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 12px;
+  width: fit-content;
+  margin-bottom: 24px;
+}
+.training-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.training-tabs button:hover {
+  color: #0f172a;
+}
+.training-tabs button.is-active {
+  background: #ffffff;
+  color: var(--sea-primary);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-badge--confirmed {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.status-badge--pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.status-badge--expired {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.status-badge--cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.status-badge--refunded {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+/* Admin Table & Toolbar */
+.training-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.training-toolbar form {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 260px;
+  flex-wrap: wrap;
+}
+.training-toolbar form input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.2s;
+}
+.btn-export:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.btn-export--excel {
+  color: #166534;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.btn-export--excel:hover {
+  background: #dcfce7;
+}
+
+.training-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+.training-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+  text-align: start;
+  font-size: 13px;
+}
+.training-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.training-table td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.training-table tbody tr:hover {
+  background: #fafbfc;
+}
+.training-table small {
+  display: block;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.cohort-editor {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 32px;
+  margin-top: 36px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+.training-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* ------------------------------------------------------------- */
+/* Responsive & Print                                            */
+/* ------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+  .checkout-summary {
+    position: static;
+  }
+  .training-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .receipt-details-grid {
+    grid-template-columns: 1fr;
+  }
+  .training-input-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  .site-header,
+  .site-footer,
+  .no-print,
+  .text-link,
+  .receipt-actions {
+    display: none !important;
+  }
+  .booking-receipt {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  .receipt-card {
+    border: 1px solid #000;
+    box-shadow: none !important;
+    padding: 24px;
+  }
+}
