@@ -292,9 +292,9 @@
   font-weight: 600;
   color: #334155;
 }
-.training-form input,
+.training-form input:not([type="checkbox"]):not([type="radio"]),
 .training-form select,
-.training-toolbar input,
+.training-toolbar input:not([type="checkbox"]):not([type="radio"]),
 .training-toolbar select {
   width: 100%;
   min-width: 0;
@@ -307,9 +307,9 @@
   font-size: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.training-form input:focus,
+.training-form input:not([type="checkbox"]):not([type="radio"]):focus,
 .training-form select:focus,
-.training-toolbar input:focus {
+.training-toolbar input:not([type="checkbox"]):not([type="radio"]):focus {
   outline: none;
   border-color: var(--sea-primary);
   box-shadow: 0 0 0 3px rgba(8, 113, 128, 0.15);

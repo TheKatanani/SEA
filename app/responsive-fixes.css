@@ -103,15 +103,149 @@ button.text-link {
   color: var(--ink);
 }
 
-.privacy-consent input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--purple);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
 .form-footer--full {
   grid-column: 1 / -1 !important;
+}
+
+/* Comprehensive Checkbox Styling (Checkout, Forms, and Admin) */
+.training-consent {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  padding: 14px 18px !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  transition: all 0.2s ease !important;
+  user-select: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-block: 10px 14px !important;
+}
+
+.training-consent:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.training-consent:has(input:checked) {
+  background: rgba(84, 15, 165, 0.04) !important;
+  border-color: rgba(84, 15, 165, 0.35) !important;
+}
+
+.training-consent input[type="checkbox"],
+.privacy-consent input[type="checkbox"],
+.admin-shell input[type="checkbox"],
+.training-form input[type="checkbox"] {
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 2px solid #540fa5 !important;
+  border-radius: 5px !important;
+  accent-color: #540fa5 !important;
+  cursor: pointer !important;
+  flex: 0 0 20px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.training-consent span {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #1e293b !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+}
+
+.training-consent span a {
+  color: #540fa5 !important;
+  text-decoration: underline !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary outline button style */
+.button--secondary-outline {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+.button--secondary-outline:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-2px);
+}
+
+/* Primary Pill in Cohorts section */
+.training-primary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(84, 15, 165, 0.12), rgba(12, 130, 144, 0.1));
+  color: #540fa5;
+  border: 1px solid rgba(84, 15, 165, 0.2);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.training-primary-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+/* Interest Form Section distinction */
+.training-interest-container {
+  margin-top: 48px;
+  border-top: 2px dashed #e2e8f0;
+  padding-top: 48px;
+}
+
+.training-interest-callout {
+  max-width: 800px;
+  margin: 0 auto 32px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.training-interest-callout__badge {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.training-interest-callout h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.training-interest-callout p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #64748b;
 }

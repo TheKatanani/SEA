@@ -130,9 +130,22 @@ function ContactDetails({ record, locale }: { record: PublicContentRecord | null
   </div>;
 }
 
-function ActionLinks({ locale, paths }: { locale: "ar" | "en"; paths: Array<{ href: string; label: string }> }) {
+function ActionLinks({ locale, paths }: { locale: "ar" | "en"; paths: Array<{ href: string; label: string; primary?: boolean }> }) {
   const Arrow = locale === "en" ? ArrowUpRight : ArrowUpLeft;
-  return <div className="button-row">{paths.map((item) => <Link className="button button--primary" href={item.href} key={item.href}>{item.label}<Arrow size={16} aria-hidden="true" /></Link>)}</div>;
+  return (
+    <div className="button-row">
+      {paths.map((item, idx) => (
+        <Link
+          className={`button ${item.primary ?? (idx === 0) ? "button--primary" : "button--light button--secondary-outline"}`}
+          href={item.href}
+          key={item.href}
+        >
+          {item.label}
+          <Arrow size={16} aria-hidden="true" />
+        </Link>
+      ))}
+    </div>
+  );
 }
 
 function HomeHero({ locale, title, description, items }: { locale: "ar" | "en"; title: string; description: string; items: PublicContentRecord[] }) {
@@ -178,10 +191,25 @@ function RouteContent({ path, locale, page, plan, data, brand }: { path: string;
 
   if (detail && detailCollection) return <>
     <SectionBlock title={title || headings[detailCollection] || (english ? "Details" : "التفاصيل")} className="cms-detail-section"><SingleCmsRecord record={detail} locale={locale} />
-      {["programs", "courses"].includes(detailCollection) && <ActionLinks locale={locale} paths={[{ href: `#cohorts-${detail.id}`, label: english ? "Book your seat" : "احجز مقعدك" }]} />}
+      {["programs", "courses"].includes(detailCollection) && <ActionLinks locale={locale} paths={[{ href: `#cohorts-${detail.id}`, label: english ? "Book your seat now" : "احجز مقعدك الآن (تأكيد فوري)", primary: true }, { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false }]} />}
       {detailCollection === "partners" && <ActionLinks locale={locale} paths={[{ href: "/partners", label: english ? "All partners" : "جميع الشركاء" }]} />}
     </SectionBlock>
-    {plan?.form && <SectionBlock title={english ? "Register your interest" : "سجّل اهتمامك"} className="cms-form-section">{["programs", "courses"].includes(detailCollection) && <p>{english ? "This form registers interest only. To reserve and pay for a seat, choose a cohort above." : "هذا النموذج لتسجيل الاهتمام فقط. لحجز مقعد والدفع، اختر إحدى الدفعات أعلاه."}</p>}<ManagedForm formType={plan.form} /></SectionBlock>}
+    {plan?.form && (
+      <div id="interest-form" className="training-interest-container">
+        <div className="training-interest-callout">
+          <div className="training-interest-callout__badge">{english ? "Secondary Option" : "مسار اختياري"}</div>
+          <h3>{english ? "Have questions or need employer approval?" : "هل لديك استفسار أو تحتاج خطاباً لجهة عملك؟"}</h3>
+          <p>
+            {english
+              ? "This form submits an inquiry or interest application only. To guarantee an immediate seat in the current cohort, please choose an available cohort from the booking section above."
+              : "هذا النموذج مخصص للاستفسار أو طلبات جهات العمل والشركات، ولا يقوم بحجز مقعد مؤكد في الدفعة الحالية. لحجز مقعدك فوراً والدفع الإلكتروني المباشر، يرجى اختيار إحدى الدفعات أعلاه."}
+          </p>
+        </div>
+        <SectionBlock title={english ? "Inquiries & Future Cohorts" : "تسجيل الاهتمام والاستفسار"} className="cms-form-section">
+          <ManagedForm formType={plan.form} />
+        </SectionBlock>
+      </div>
+    )}
   </>;
 
   if (path === "/contact") return <>
@@ -252,7 +280,10 @@ export async function FirestorePage({ path }: { path: string }) {
     if (detailRecord && detailPlan) {
       const isTraining = detailPlan.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection);
       const detailHeroLinks = isTraining
-        ? [{ href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat" : "احجز مقعدك" }, { href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
+        ? [
+            { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat (Instant confirmation)" : "احجز مقعدك الآن (تثبيت ودفع فوري)", primary: true },
+            { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false },
+          ]
         : [];
       return <article className="cms-page"><RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />Saudi Entertainment Academy</p><h1>{String(localizedFields(detailRecord, locale).title || detailRecord.title || detailRecord.name || "")}</h1>{detailHeroLinks.length > 0 && <ActionLinks locale={locale} paths={detailHeroLinks} />}</div></RevealSection>{bookingOptions}<RouteContent path={path} locale={locale} page={null} plan={detailPlan} data={records} brand={null} /></article>;
     }
@@ -277,7 +308,10 @@ export async function FirestorePage({ path }: { path: string }) {
   const brand = path === "/contact" ? await getPublishedBrandRecord() : null;
   const isProgramDetail = Boolean(detailRecord && detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection));
   const heroLinks = isProgramDetail && detailRecord
-    ? [{ href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat" : "احجز مقعدك" }, { href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
+    ? [
+        { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat (Instant confirmation)" : "احجز مقعدك الآن (تثبيت ودفع فوري)", primary: true },
+        { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false },
+      ]
     : path === "/programs"
     ? [{ href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
     : [];

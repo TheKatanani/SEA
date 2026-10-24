@@ -41,9 +41,12 @@ export function CohortOptions({ collection, programId, locale }: { collection: s
   return (
     <section className="training-options page-shell" aria-labelledby={"cohorts-title-" + programId} id={"cohorts-" + programId} style={{ scrollMarginTop: "100px" }}>
       <div className="training-section-heading">
-        <p className="eyebrow">{en ? "Book your place" : "احجز مقعدك"}</p>
-        <h2 id={"cohorts-title-" + programId}>{en ? "Dates, fees & available seats" : "المواعيد والرسوم والمقاعد المتاحة"}</h2>
-        <p>{en ? "Choose a cohort, enter one learner's details, then pay to confirm the seat." : "اختر الدفعة التدريبية، أدخل بيانات متدرب واحد، ثم ادفع لتأكيد المقعد فوراً."}</p>
+        <div className="training-primary-pill">
+          <span className="training-primary-pill__dot" />
+          {en ? "Official Direct Path • Instant Seat Hold" : "المسار الأساسي والمعتمد • حجز مقعد وتأكيد فوري"}
+        </div>
+        <h2 id={"cohorts-title-" + programId}>{en ? "Available Cohorts & Instant Booking" : "الدفعات المتاحة والتسجيل الفوري المباشر"}</h2>
+        <p>{en ? "Live seat inventory with automatic closure when full. Choose a cohort and confirm with Moyasar payment." : "سعة محددة لكل دفعة مع إغلاق تلقائي عند اكتمال المقاعد. اختر الدفعة وادفع عبر ميسر لتأكيد تسجيلك فوراً."}</p>
       </div>
 
       <ol className="booking-steps" aria-label={en ? "Booking steps" : "خطوات الحجز"}>
@@ -142,7 +145,7 @@ export function CohortOptions({ collection, programId, locale }: { collection: s
 
               {c.open && enabled && state === "ready" ? (
                 <Link className="button button--primary" href={"/checkout/" + c.id}>
-                  {en ? "Book your seat" : "احجز مقعدك الآن"}
+                  {en ? "Reserve seat & proceed to payment" : "تأكيد المقعد ومتابعة الدفع"}
                   {en ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                 </Link>
               ) : (
