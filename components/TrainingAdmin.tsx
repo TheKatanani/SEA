@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
-import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check } from "lucide-react";
+import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check, Sparkles } from "lucide-react";
 import type { PublicCohort } from "./CohortOptions";
 
 type Row = Record<string, unknown> & { id: string };
@@ -91,6 +91,69 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       })
       .catch(() => {});
   }, [request]);
+
+  function autoFillCohort(programCollection: string, programId: string) {
+    if (!programId) return;
+    const program = programs.find((p) => p.collection === programCollection && p.id === programId);
+    if (!program) return;
+
+    const locales = program.locales as Record<string, { title?: string }> | undefined;
+    const programTitleAr = locales?.ar?.title || String(program.title || program.id);
+    const programTitleEn = locales?.en?.title || String(program.name || program.title || program.id);
+
+    // Calculate cohort count for this program to set sequential ordinal
+    const existing = allCohorts.filter(
+      (c) => String(c.programId) === programId || (c.programCollection === programCollection && String(c.programId) === programId)
+    );
+    const cohortNum = existing.length + 1;
+    const arabicOrdinals = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة"];
+    const ordinalAr = arabicOrdinals[cohortNum - 1] || `رقم ${cohortNum}`;
+
+    // Derive concise cohort code (e.g. course-crowd -> CRD-01)
+    const baseCode = programId.replace(/^(course|program)-/, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const prefix = baseCode.slice(0, 3) || "SEA";
+    const cohortCode = `${prefix}-0${cohortNum}`;
+
+    // Target start date: next Sunday at 09:00 AM Riyadh time
+    const targetStart = new Date();
+    const daysUntilSunday = ((7 - targetStart.getDay()) % 7) || 7;
+    targetStart.setDate(targetStart.getDate() + daysUntilSunday);
+    targetStart.setHours(9, 0, 0, 0);
+    const startIso = new Date(targetStart.getTime() + 3 * 3600000).toISOString().slice(0, 16);
+
+    // Target end date: 4 weeks after start date at 15:00 Riyadh time
+    const targetEnd = new Date(targetStart);
+    targetEnd.setDate(targetEnd.getDate() + 28);
+    targetEnd.setHours(15, 0, 0, 0);
+    const endIso = new Date(targetEnd.getTime() + 3 * 3600000).toISOString().slice(0, 16);
+
+    setForm((current) => ({
+      ...current,
+      id: current.id || "",
+      programCollection,
+      programId,
+      cohortCode: current.cohortCode && current.id ? current.cohortCode : cohortCode,
+      titleAr: `الدفعة ${ordinalAr} - ${programTitleAr}`,
+      titleEn: `Cohort ${cohortNum} - ${programTitleEn}`,
+      price: current.price || (setup?.demo ? "1" : "1500"),
+      capacity: current.capacity || "25",
+      start: current.start || startIso,
+      end: current.end || endIso,
+      scheduleAr: current.scheduleAr || "الأحد إلى الخميس • 9:00 ص - 3:00 م",
+      scheduleEn: current.scheduleEn || "Sunday to Thursday • 9:00 AM - 3:00 PM",
+      locationType: "in_person",
+      venueAr: "مقر الأكاديمية - فرع الربوة، الرياض",
+      venueEn: "SEA Campus - Al-Rabwah, Riyadh",
+      status: "published",
+      registrationOpen: true,
+    }));
+
+    setNotice(
+      en
+        ? `✨ Auto-filled data for "${programTitleEn}". You can edit any field before saving.`
+        : `✨ تم تعبئة البيانات المقترحة تلقائياً لـ "${programTitleAr}". يمكنك تعديل أي حقل قبل الحفظ.`
+    );
+  }
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -583,9 +646,21 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       {/* Cohort Editor Form */}
       {collection === "cohorts" && (
         <form id="cohort-editor" className="training-form cohort-editor" onSubmit={save}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-            <PlusCircle size={22} style={{ color: "var(--sea-primary)" }} />
-            <h2 style={{ margin: "0" }}>{form.id ? (en ? "Edit Cohort" : "تعديل الدفعة التدريبية") : en ? "Create New Cohort" : "إضافة دفعة تدريبية جديدة"}</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <PlusCircle size={22} style={{ color: "var(--sea-primary)" }} />
+              <h2 style={{ margin: "0" }}>{form.id ? (en ? "Edit Cohort" : "تعديل الدفعة التدريبية") : en ? "Create New Cohort" : "إضافة دفعة تدريبية جديدة"}</h2>
+            </div>
+            <button
+              type="button"
+              className="btn-autofill"
+              disabled={!form.programId}
+              onClick={() => autoFillCohort(form.programCollection, form.programId)}
+              title={en ? "Auto-fill suggested data for the selected course" : "تعبئة مقترحة لبيانات الدفعة استناداً إلى الدورة المختارة"}
+            >
+              <Sparkles size={16} />
+              {en ? "Auto-fill from Course" : "تعبئة تلقائية ذكية (حسب الدورة)"}
+            </button>
           </div>
 
           <div className="training-input-grid">
@@ -596,8 +671,16 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                 disabled={!!form.id}
                 value={form.programId ? form.programCollection + "/" + form.programId : ""}
                 onChange={(e) => {
-                  const [programCollection, programId] = e.target.value.split("/");
+                  const val = e.target.value;
+                  if (!val) {
+                    setForm((v) => ({ ...v, programCollection: "programs", programId: "" }));
+                    return;
+                  }
+                  const [programCollection, programId] = val.split("/");
                   setForm((v) => ({ ...v, programCollection, programId }));
+                  if (!form.id) {
+                    autoFillCohort(programCollection, programId);
+                  }
                 }}
               >
                 <option value="">{en ? "Choose published program" : "اختر برنامجاً منشوراً"}</option>

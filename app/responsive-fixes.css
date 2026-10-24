@@ -349,3 +349,34 @@ button.text-link {
   border-top: 1px dashed rgba(225, 29, 72, 0.25) !important;
   color: #9f1239 !important;
 }
+
+/* Smart Auto-fill Button for Cohorts */
+.btn-autofill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: linear-gradient(135deg, rgba(84, 15, 165, 0.08), rgba(12, 130, 144, 0.08)) !important;
+  color: #540fa5 !important;
+  border: 1.5px solid rgba(84, 15, 165, 0.25) !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 6px rgba(84, 15, 165, 0.06) !important;
+}
+
+.btn-autofill:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(84, 15, 165, 0.15), rgba(12, 130, 144, 0.15)) !important;
+  border-color: #540fa5 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(84, 15, 165, 0.15) !important;
+}
+
+.btn-autofill:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
+}
