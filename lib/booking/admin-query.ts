@@ -17,6 +17,7 @@ export function trainingQuery(request: NextRequest) {
     if (collection !== "bookings") throw new BookingError("SEARCH_BOOKINGS_ONLY", 400);
     query = query.where("searchTokens", "array-contains", search.slice(0, 100));
   }
-  return { collection, query: query.orderBy(collection === "payments" ? "updatedAt" : "createdAt", "desc") };
+  const rawQuery = query;
+  return { collection, rawQuery, query: query.orderBy(collection === "payments" ? "updatedAt" : "createdAt", "desc") };
 }
 

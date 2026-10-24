@@ -10,18 +10,34 @@ function safe(value: unknown) { const text = String(value ?? ""); return /^[\s]*
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request, ["owner", "admin"]);
-    const { collection, query } = trainingQuery(request);
+    const { collection, query, rawQuery } = trainingQuery(request);
     if (collection !== "bookings") return Response.json({ error: "EXPORT_BOOKINGS_ONLY" }, { status: 400 });
     const records: unknown[][] = [];
     let cursor: QueryDocumentSnapshot | undefined;
+    let fallback = false;
     while (true) {
-      const page = await (cursor ? query.startAfter(cursor) : query).limit(500).get();
+      let page;
+      try {
+        if (fallback) {
+          page = await rawQuery.limit(500).get();
+        } else {
+          page = await (cursor ? query.startAfter(cursor) : query).limit(500).get();
+        }
+      } catch (err: unknown) {
+        const errorObj = err as { code?: number; message?: string };
+        if (errorObj?.code === 9 || errorObj?.message?.includes("index")) {
+          fallback = true;
+          page = await rawQuery.limit(500).get();
+        } else {
+          throw err;
+        }
+      }
       for (const doc of page.docs) {
         const b = doc.data(); const a = b.attendee || {};
         records.push([b.bookingNumber, a.fullName, a.nationalId, a.mobile, a.email, b.cohortId, b.status, (b.amountMinor || 0) / 100, new Date(b.createdAt).toISOString(), b.paymentId || ""]);
       }
       if (records.length > 20000) return Response.json({ error: "EXPORT_TOO_LARGE_USE_COHORT_OR_STATUS_FILTER" }, { status: 413 });
-      if (page.size < 500) break;
+      if (page.size < 500 || fallback) break;
       cursor = page.docs[page.size - 1];
     }
     const filename = "sea-registrants-" + new Date().toISOString().slice(0, 10);

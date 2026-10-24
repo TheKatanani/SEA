@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       }
     }
     if (request.nextUrl.searchParams.has("cohortId") && !request.nextUrl.searchParams.has("collection")) return Response.json({ cohort: publicCohort(await getCohort(idSchema.parse(request.nextUrl.searchParams.get("cohortId")))) });
-    const { collection, query: base } = trainingQuery(request);
+    const { collection, query: base, rawQuery } = trainingQuery(request);
     let query = base;
     const cursor = request.nextUrl.searchParams.get("cursor");
     if (cursor) {
@@ -53,14 +53,35 @@ export async function GET(request: NextRequest) {
       if (!document.exists) return Response.json({ error: "INVALID_CURSOR" }, { status: 400 });
       query = query.startAfter(document);
     }
-    const rows = await query.limit(31).get();
-    const docs = rows.docs.slice(0, 30);
+    let docs: FirebaseFirestore.QueryDocumentSnapshot[];
+    let hasMore = false;
+    try {
+      const rows = await query.limit(31).get();
+      docs = rows.docs.slice(0, 30);
+      hasMore = rows.size > 30;
+    } catch (queryErr: unknown) {
+      const err = queryErr as { code?: number; message?: string };
+      if (err?.code === 9 || err?.message?.includes("index") || err?.message?.includes("FAILED_PRECONDITION")) {
+        console.warn("Index missing on admin training query, using in-memory sort fallback:", err?.message);
+        const fallbackRows = await (rawQuery || getAdminDb().collection(collection)).limit(100).get();
+        const sortField = collection === "payments" ? "updatedAt" : "createdAt";
+        const sorted = [...fallbackRows.docs].sort((a, b) => {
+          const aVal = (a.data()[sortField] as number) || 0;
+          const bVal = (b.data()[sortField] as number) || 0;
+          return bVal - aVal;
+        });
+        docs = sorted.slice(0, 30);
+        hasMore = sorted.length > 30;
+      } else {
+        throw queryErr;
+      }
+    }
     return Response.json({ items: docs.map((doc) => {
       const value = { ...doc.data(), id: doc.id };
       if (collection === "cohorts") return publicCohort(value as Parameters<typeof publicCohort>[0]);
       const { searchTokens: _tokens, ...item } = value as Record<string, unknown>;
       return item;
-    }), nextCursor: rows.size > 30 ? docs[docs.length - 1].id : null }, { headers: { "Cache-Control": "private, no-store" } });
+    }), nextCursor: hasMore ? docs[docs.length - 1].id : null }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error instanceof z.ZodError) return Response.json({ error: "INVALID_QUERY" }, { status: 400 });
     if (error instanceof Error && error.name === "AdminAuthError") return authErrorResponse(error);
