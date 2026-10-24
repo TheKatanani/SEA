@@ -21,7 +21,7 @@ export function ProgramCard({ program, index = 0 }: { program: Program; index?: 
           <div className="program-card__meta"><span>{english ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</span><span className="program-card__arrow"><Arrow size={15} /></span></div>
           <h3>{title}</h3>
           <p>{description}</p>
-          <span className="text-link">{english ? "Explore program" : "اكتشف البرنامج"} <Arrow size={15} aria-hidden="true" /></span>
+          <span className="text-link">{english ? "Details & booking" : "التفاصيل والحجز"} <Arrow size={15} aria-hidden="true" /></span>
         </div>
       </Link>
     </article>

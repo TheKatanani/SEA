@@ -3,3 +3,4 @@
 
 
 .training-toolbar form{flex-wrap:wrap}.training-toolbar form input{flex:1;min-width:150px}.training-table td button+button{margin-inline-start:6px}
+.booking-steps{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-wrap:wrap;gap:14px 28px}.booking-steps li{display:flex;align-items:center;gap:9px;font-size:14px}.booking-steps li>span{display:grid;place-items:center;border-radius:50%;width:28px;height:28px;background:var(--primary,#087180);color:#fff;font-weight:700}.training-demo-note{padding:15px 18px;border:1px solid #e7bc5a;border-radius:12px;background:#fff7df;color:#704d0a;margin-block:0 22px;line-height:1.9}.training-setup{padding:20px;border:1px solid #d8e3e4;border-radius:14px;background:#fff;margin-bottom:22px}.training-setup h2{font-size:18px;margin:0 0 10px}.training-setup ul{padding-inline-start:22px}.training-setup code{direction:ltr;unicode-bidi:embed;overflow-wrap:anywhere}

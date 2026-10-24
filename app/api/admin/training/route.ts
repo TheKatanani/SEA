@@ -5,12 +5,22 @@ import { requireAdmin, authErrorResponse } from "@/lib/firebase/authorization";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { cohortSchema, idSchema, publicCohort } from "@/lib/booking/domain";
 import { getCohort, saveCohort } from "@/lib/booking/service";
-import { bookingResponse } from "@/lib/booking/security";
+import { assertBookingEnabled, bookingResponse } from "@/lib/booking/security";
 import { trainingQuery } from "@/lib/booking/admin-query";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request, ["owner", "admin"]);
+    if (request.nextUrl.searchParams.get("setup") === "true") {
+      const missing: string[] = [];
+      if (process.env.BOOKINGS_ENABLED !== "true") missing.push("BOOKINGS_ENABLED");
+      if (!process.env.PRIVACY_POLICY_VERSION?.trim() || process.env.PRIVACY_POLICY_VERSION.trim() === "pending-approval") missing.push("PRIVACY_POLICY_VERSION");
+      if (!process.env.BOOKING_ACCESS_SECRET || process.env.BOOKING_ACCESS_SECRET.length < 32) missing.push("BOOKING_ACCESS_SECRET");
+      for (const key of ["NEXT_PUBLIC_APP_URL", "NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY", "MOYASAR_SECRET_KEY"]) if (!process.env[key]) missing.push(key);
+      let bookingReady = true;
+      try { assertBookingEnabled(); } catch (error) { bookingReady = false; if (!missing.length) missing.push(error instanceof Error ? error.message : "BOOKING_CONFIGURATION"); }
+      return Response.json({ bookingReady, missing, demo: process.env.SITE_DEMO_MODE === "true", applicationsEnabled: process.env.APPLICATIONS_ENABLED === "true", webhookConfigured: Boolean(process.env.MOYASAR_WEBHOOK_SECRET) }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     if (request.nextUrl.searchParams.get("overview") === "true") {
       const db = getAdminDb();
       const [cohorts, confirmed, pending, revenue] = await Promise.all([

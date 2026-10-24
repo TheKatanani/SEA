@@ -8,7 +8,7 @@ import { Link } from "@/i18n/navigation";
 type Field = { name: string; label: string; type?: "text" | "email" | "tel" | "select" | "textarea"; required?: boolean; options?: string[]; placeholder?: string; full?: boolean };
 type FormType = "quick_interest" | "application_interest" | "employer_inquiry" | "future_diploma_interest" | "contact_inquiry";
 
-function UiOnlyForm({ title, description, fields, formType, buttonLabel = "إرسال", english = false }: { title: string; description?: string; fields: Field[]; formType: FormType; buttonLabel?: string; english?: boolean }) {
+function UiOnlyForm({ title, description, fields, formType, buttonLabel = "إرسال", english = false, demo = false }: { title: string; description?: string; fields: Field[]; formType: FormType; buttonLabel?: string; english?: boolean; demo?: boolean }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [serverError, setServerError] = useState("");
   const t = useTranslations("forms");
@@ -46,6 +46,7 @@ function UiOnlyForm({ title, description, fields, formType, buttonLabel = "إر�
 
   return <form className={`form-grid ${english ? "form-grid--english" : ""}`} onSubmit={submit}>
     <h2 className="form-title form-field--full">{title}</h2>
+    {demo && <p className="training-demo-note form-field--full" role="status">{english ? "Test environment — use fictional contact details only. This does not submit an actual admission application." : "بيئة تجريبية — استخدم بيانات تواصل وهمية فقط. هذا النموذج لا يقدم طلب قبول فعلياً."}</p>}
     {description && <p className="form-description form-field--full">{description}</p>}
     {fields.map((field) => <label className={`field ${field.full ? "form-field--full" : ""}`} key={field.name}>
       <span>{field.label}{field.required ? " *" : ""}</span>
@@ -67,17 +68,21 @@ export function ManagedForm({ formType }: { formType: FormType }) {
   const [form, setForm] = useState<FormRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [available, setAvailable] = useState(false);
+  const [demo, setDemo] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    fetch("/api/site/content?collection=forms", { cache: "no-store", signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("Form definitions are unavailable");
-        return response.json();
-      })
-      .then((result) => {
+    Promise.all(["/api/site/content?collection=forms", "/api/applications"].map(async (url) => {
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Form is unavailable");
+      return response.json();
+    }))
+      .then(([result, readiness]) => {
         const record = (Array.isArray(result?.items) ? result.items : []).find((item: FormRecord) => item.id === formType);
         setForm(record || null);
+        setAvailable(readiness?.enabled === true);
+        setDemo(readiness?.demo === true);
         setLoadError(false);
       }).catch(() => { if (!controller.signal.aborted) { setForm(null); setLoadError(true); } }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -85,11 +90,12 @@ export function ManagedForm({ formType }: { formType: FormType }) {
 
   if (loading) return <p className="cms-collection-state" aria-live="polite">{english ? "Loading form…" : "جارٍ تحميل النموذج…"}</p>;
   if (loadError) return <p className="cms-collection-state" role="alert">{english ? "The form could not be loaded. Please try again later." : "تعذر تحميل النموذج. يرجى المحاولة لاحقًا."}</p>;
+  if (!available) return <div className="training-empty" role="status"><h3>{english ? "Online enquiries are temporarily unavailable" : "استقبال الطلبات الإلكترونية غير متاح حالياً"}</h3><p>{english ? "Please contact the Academy team using the contact details below." : "يمكنك التواصل مع فريق الأكاديمية عبر بيانات الاتصال."}</p><Link className="text-link" href="/contact">{english ? "Contact the Academy" : "بيانات التواصل مع الأكاديمية"}</Link></div>;
   if (!form) return <p className="cms-collection-state" role="status">{english ? "This form is not published yet." : "هذا النموذج غير منشور حاليًا."}</p>;
   const localized = form.locales?.[english ? "en" : "ar"];
   if (!localized || !Array.isArray(localized.fields)) return <p className="cms-collection-state" role="status">{english ? "This form is not available in this language." : "هذا النموذج غير متاح بهذه اللغة."}</p>;
   if (localized.fields.some((field) => field.type === "select" && (!Array.isArray(field.options) || field.options.length === 0))) return <p className="cms-collection-state" role="alert">{english ? "This form needs its choices configured. Please contact the Academy." : "يحتاج النموذج إلى إعداد خياراته. يرجى التواصل مع الأكاديمية."}</p>;
-  return <UiOnlyForm english={english} formType={formType} title={localized.title || ""} description={localized.description} buttonLabel={localized.buttonLabel || (english ? "Submit" : "إرسال")} fields={localized.fields} />;
+  return <UiOnlyForm english={english} demo={demo} formType={formType} title={localized.title || ""} description={localized.description} buttonLabel={localized.buttonLabel || (english ? "Submit" : "إرسال")} fields={localized.fields} />;
 }
 
 export function QuickRegistrationForm() { return <ManagedForm formType="quick_interest" />; }

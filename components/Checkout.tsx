@@ -49,7 +49,7 @@ function PaymentForm({ data, token, locale }: { data: BookingResult; token: stri
     <Link className="text-link" href={"/booking/confirmation/" + b.id + "#token=" + token}>{en ? "Check booking status" : "متابعة حالة الحجز"}</Link>
   </div>;
 }
-export function Checkout({ cohort, enabled }: { cohort: PublicCohort; enabled: boolean }) {
+export function Checkout({ cohort, enabled, demo = false }: { cohort: PublicCohort; enabled: boolean; demo?: boolean }) {
   const locale = useLocale(); const en = locale === "en"; const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [result, setResult] = useState<BookingResult | null>(null); const [token, setToken] = useState("");
   useEffect(() => {
@@ -74,7 +74,7 @@ export function Checkout({ cohort, enabled }: { cohort: PublicCohort; enabled: b
     } catch (caught) { setError(errorLabel(caught instanceof Error ? caught.message : "", en)); }
     finally { setBusy(false); }
   }
-  return <div className="checkout-shell page-shell"><div className="training-section-heading"><p className="eyebrow">SEA · {en ? "Single-seat booking" : "حجز مقعد واحد"}</p><h1>{en ? "Your place in the next cohort" : "مقعدك في الدفعة القادمة"}</h1><p>{en ? "Enter the learner's details, then complete your payment." : "أدخل بيانات المتدرب ثم أكمل الدفع لتأكيد مقعدك."}</p></div><div className="checkout-grid"><section className="content-panel">
+  return <div className="checkout-shell page-shell"><div className="training-section-heading"><p className="eyebrow">SEA · {en ? "Single-seat booking" : "حجز مقعد واحد"}</p><h1>{en ? "Your place in the next cohort" : "مقعدك في الدفعة القادمة"}</h1><p>{en ? "Enter the learner's details, then complete your payment." : "أدخل بيانات المتدرب ثم أكمل الدفع لتأكيد مقعدك."}</p></div>{demo && <p className="training-demo-note" role="status">{en ? "Test environment — fictional learner details and Moyasar test cards only. This is not a real course enrolment." : "بيئة تجريبية — استخدم بيانات متدرب وهمية وبطاقات ميسر الاختبارية فقط. هذا ليس تسجيلاً فعلياً في دورة."}</p>}<div className="checkout-grid"><section className="content-panel">
     {result ? <PaymentForm data={result} token={token} locale={locale} /> : !enabled || !cohort.open ? <div className="training-empty"><h2>{en ? "Booking currently unavailable" : "الحجز غير متاح حالياً"}</h2><p>{en ? "Please contact the Academy or choose another cohort." : "يرجى التواصل مع الأكاديمية أو اختيار دفعة أخرى."}</p><Link href="/contact" className="button button--primary">{en ? "Contact us" : "تواصل معنا"}</Link></div> : <form className="training-form" onSubmit={submit}><h2>{en ? "Learner details" : "بيانات المتدرب"}</h2><p className="training-note">{en ? "This booking is for one learner and one seat only." : "هذا الحجز لمتدرب واحد ومقعد واحد فقط."}</p>
       <label>{en ? "Full name" : "الاسم الرباعي"}<input name="fullName" autoComplete="name" minLength={6} maxLength={150} required /></label>
       <label>{en ? "National ID / Iqama" : "رقم الهوية / الإقامة"}<input name="nationalId" inputMode="numeric" pattern="[12][0-9]{9}" minLength={10} maxLength={10} required /></label>

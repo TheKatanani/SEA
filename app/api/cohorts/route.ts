@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const program = await getAdminDb().collection(collection).doc(id).get();
     if (program.data()?.status !== "published") return Response.json({ error: "NOT_FOUND" }, { status: 404 });
     let bookingEnabled = true; try { assertBookingEnabled(); } catch { bookingEnabled = false; }
-    return Response.json({ items: (await listCohorts(collection, id)).map((c) => publicCohort(c)), bookingEnabled }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ items: (await listCohorts(collection, id)).map((c) => publicCohort(c)), bookingEnabled, demo: process.env.SITE_DEMO_MODE === "true" }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return bookingResponse(error); }
 }
 

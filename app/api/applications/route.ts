@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const formTypes = ["quick_interest", "application_interest", "employer_inquiry", "future_diploma_interest", "contact_inquiry"] as const;
 const schema = z.object({
@@ -15,11 +16,21 @@ const schema = z.object({
   website: z.string().max(200).optional(),
 });
 
+function configurationError() {
+  if (process.env.APPLICATIONS_ENABLED !== "true") return "Submissions are not enabled yet";
+  if (!process.env.PRIVACY_POLICY_VERSION?.trim() || process.env.PRIVACY_POLICY_VERSION.trim() === "pending-approval") return "Privacy policy is not configured";
+  if (!isFirebaseAdminConfigured()) return "Application storage is not configured";
+  if (!process.env.FIREBASE_RATE_LIMIT_SECRET) return "Submission protection is not configured";
+  return null;
+}
+
+export async function GET() {
+  return Response.json({ enabled: configurationError() === null, demo: process.env.SITE_DEMO_MODE === "true" }, { headers: { "Cache-Control": "no-store" } });
+}
+
 export async function POST(request: NextRequest) {
-  if (process.env.APPLICATIONS_ENABLED !== "true") return Response.json({ error: "Submissions are not enabled yet" }, { status: 503 });
-  if (!process.env.PRIVACY_POLICY_VERSION || process.env.PRIVACY_POLICY_VERSION === "pending-approval") return Response.json({ error: "Privacy policy is not configured" }, { status: 503 });
-  if (!isFirebaseAdminConfigured()) return Response.json({ error: "Application storage is not configured" }, { status: 503 });
-  if (!process.env.FIREBASE_RATE_LIMIT_SECRET) return Response.json({ error: "Submission protection is not configured" }, { status: 503 });
+  const unavailable = configurationError();
+  if (unavailable) return Response.json({ error: unavailable }, { status: 503 });
   const origin = request.headers.get("origin");
   const expectedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
   if (origin && expectedHost) {

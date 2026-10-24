@@ -40,6 +40,8 @@ async function seed() {
   await db.collection('courses').doc('local-sandbox-course').set({ status: 'published', slug: 'local-sandbox-course', href: '/courses/local-sandbox-course', locales: { ar: { title: 'دورة اختبار محلية فقط', description: 'هذه بيانات اختبار وهمية وليست برنامجاً متاحاً للبيع.' }, en: { title: 'LOCAL TEST ONLY — Sandbox Course', description: 'Synthetic test data. This is not a real course for sale.' } } });
   await db.collection('brand').doc('main').set({ status: 'published', locales: { ar: { name: 'SEA — اختبار محلي' }, en: { name: 'SEA — LOCAL TEST' } } });
   await db.collection('policies').doc('privacy').set({ status: 'published', slug: 'privacy', href: '/policies/privacy', locales: { en: { title: 'LOCAL TEST POLICY', body: 'Synthetic local testing only. No real learner data.' }, ar: { title: 'سياسة اختبار محلية', body: 'اختبار محلي ببيانات وهمية فقط.' } } });
+  await db.collection('pages').doc('programs').set({ status: 'published', locales: { ar: { title: 'برامج تجريبية محلية' }, en: { title: 'Local sandbox programs' } } });
+  await db.collection('forms').doc('application_interest').set({ status: 'published', locales: Object.fromEntries(['ar', 'en'].map(locale => [locale, { title: locale === 'ar' ? 'اهتمام تجريبي فقط' : 'Test interest form', fields: [{ name: 'fullName', label: locale === 'ar' ? 'الاسم الوهمي' : 'Fictional name', type: 'text', required: true }, { name: 'email', label: locale === 'ar' ? 'البريد الوهمي' : 'Fictional email', type: 'email', required: true }] }])) });
   ownerToken = await signIn('local-owner@example.invalid'); admissionsToken = await signIn('local-admissions@example.invalid');
 }
 async function main() {
@@ -56,6 +58,11 @@ async function main() {
   const definitions = Object.fromEntries(['qa-race', 'qa-expiry', 'qa-cancel', 'qa-closed', 'qa-consent', 'qa-limit'].map(id => [id, cohort(id, id === 'qa-limit' ? 10 : 1)]));
   await check('Owner can create published test cohorts through authenticated API', async () => { for (const value of Object.values(definitions)) { const r = await save(value); assert.equal(r.status, 200); } });
   await check('Firestore emulator connection and demo-only project are active', async () => { assert.equal(db.projectId, PROJECT_ID); const r = await request('/api/health/firebase'); assert.equal(r.status, 200); assert.equal(r.body.status, 'firestore-ok'); });
+  await check('Sandbox interest form preflight and synthetic submission both work', async () => {
+    const preflight = await request('/api/applications'); assert.equal(preflight.status, 200); assert.deepEqual(preflight.body, { enabled: true, demo: true });
+    const saved = await request('/api/applications', { method: 'POST', data: { formType: 'application_interest', locale: 'en', fields: { fullName: 'Synthetic Interest Learner', email: 'interest@example.invalid' }, privacyConsent: true } }); assert.equal(saved.status, 201);
+    const rows = await db.collection('applications').where('fields.email', '==', 'interest@example.invalid').get(); assert.ok(rows.size > 0); assert.equal(rows.docs[0].data().privacyPolicyVersion, 'local-synthetic-test-only');
+  });
   await check('Unauthenticated training access is denied', async () => { assert.equal((await request('/api/admin/training')).status, 401); });
   await check('Admissions role cannot create or export financial bookings', async () => { assert.equal((await save(cohort('qa-forbidden'), admissionsToken)).status, 403); assert.equal((await request('/api/admin/training/export', { token: admissionsToken })).status, 403); });
   await check('Public API does not expose financial collections', async () => { const r = await request('/api/site/content?collection=bookings'); assert.equal(r.status, 404); });

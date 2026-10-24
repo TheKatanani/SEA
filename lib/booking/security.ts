@@ -28,9 +28,10 @@ export function assertOrigin(request: NextRequest) {
 export function assertBookingEnabled() {
   if (process.env.BOOKINGS_ENABLED !== "true") throw new BookingError("BOOKING_NOT_ENABLED", 503);
   bookingSignature("configuration-check");
-  if (!process.env.PRIVACY_POLICY_VERSION || process.env.PRIVACY_POLICY_VERSION === "pending-approval") throw new BookingError("PRIVACY_POLICY_NOT_CONFIGURED", 503);
+  if (!process.env.PRIVACY_POLICY_VERSION?.trim() || process.env.PRIVACY_POLICY_VERSION.trim() === "pending-approval") throw new BookingError("PRIVACY_POLICY_NOT_CONFIGURED", 503);
   if (!process.env.MOYASAR_SECRET_KEY || !process.env.NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY || !process.env.NEXT_PUBLIC_APP_URL) throw new BookingError("PAYMENT_NOT_CONFIGURED", 503);
   const live = process.env.MOYASAR_SECRET_KEY.startsWith("sk_live_");
+  if (process.env.SITE_DEMO_MODE === "true" && live) throw new BookingError("DEMO_REQUIRES_TEST_KEYS", 503);
   if (!process.env.MOYASAR_SECRET_KEY.startsWith(live ? "sk_live_" : "sk_test_") || !process.env.NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY.startsWith(live ? "pk_live_" : "pk_test_")) throw new BookingError("PAYMENT_MODE_MISMATCH", 503);
   if (live && new URL(process.env.NEXT_PUBLIC_APP_URL).protocol !== "https:") throw new BookingError("HTTPS_REQUIRED", 503);
 }

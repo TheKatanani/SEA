@@ -14,6 +14,6 @@ export default async function CheckoutPage({ params }: { params: Promise<{ cohor
   const program = await getAdminDb().collection(cohort.programCollection).doc(cohort.programId).get();
   if (program.data()?.status !== "published") notFound();
   let enabled = true; try { assertBookingEnabled(); } catch { enabled = false; }
-  return <Checkout cohort={publicCohort(cohort)} enabled={enabled} />;
+  return <Checkout cohort={publicCohort(cohort)} enabled={enabled} demo={process.env.SITE_DEMO_MODE === "true"} />;
 }
 

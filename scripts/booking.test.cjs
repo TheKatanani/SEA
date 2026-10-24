@@ -241,5 +241,37 @@ test("older payment snapshots cannot undo a refund or hide a successful charge",
   assert.equal(db.rows.get("payments/payment-one").refundedMinor,15000);
   assert.equal(db.rows.get("cohorts/cohort-one").confirmedSeats,0);
 });
+async function withEnvironment(values, run) {
+  const saved = Object.fromEntries(Object.keys(values).map(key => [key, process.env[key]]));
+  for (const [key, value] of Object.entries(values)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+  try { await run(); } finally { for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } }
+}
+test("form readiness prevents collecting details while privacy setup is missing", async () => {
+  reset(); const api = load("app/api/applications/route.ts");
+  await withEnvironment({ APPLICATIONS_ENABLED: "true", PRIVACY_POLICY_VERSION: "  ", FIREBASE_RATE_LIMIT_SECRET: "synthetic-rate-secret", SITE_DEMO_MODE: "true" }, async () => {
+    const readiness = await api.GET(); assert.equal(readiness.status, 200); assert.deepEqual(await readiness.json(), { enabled: false, demo: true });
+    const rejected = await api.POST({}); assert.equal(rejected.status, 503); assert.equal((await rejected.json()).error, "Privacy policy is not configured");
+    assert.equal([...db.rows.keys()].some(key => key.startsWith("applications/")), false);
+    process.env.PRIVACY_POLICY_VERSION = "sandbox-test-policy-v1";
+    assert.deepEqual(await (await api.GET()).json(), { enabled: true, demo: true });
+  });
+});
+test("sandbox mode refuses live Moyasar keys and still allows a configured test checkout", async () => {
+  await withEnvironment({ SITE_DEMO_MODE: "true", BOOKINGS_ENABLED: "true", PRIVACY_POLICY_VERSION: "sandbox-test-policy-v1", NEXT_PUBLIC_APP_URL: "https://example.invalid", MOYASAR_SECRET_KEY: "sk_live_synthetic_only", NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY: "pk_live_synthetic_only" }, async () => {
+    assert.throws(() => security.assertBookingEnabled(), error => error.code === "DEMO_REQUIRES_TEST_KEYS");
+    process.env.MOYASAR_SECRET_KEY = "sk_test_synthetic_only"; process.env.NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY = "pk_test_synthetic_only";
+    assert.doesNotThrow(() => security.assertBookingEnabled());
+  });
+});
+test("booking setup diagnostics require an administrator and never return key values", async () => {
+  reset(); const api = load("app/api/admin/training/route.ts");
+  const request = { headers: new Headers({ Authorization: "Bearer test" }), nextUrl: new URL("http://localhost/api/admin/training?setup=true") };
+  await withEnvironment({ BOOKINGS_ENABLED: "false", PRIVACY_POLICY_VERSION: "pending-approval", NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY: "pk_test_private_fixture" }, async () => {
+    const response = await api.GET(request); assert.equal(response.status, 200); const body = await response.json();
+    assert.equal(body.bookingReady, false); assert.ok(body.missing.includes("PRIVACY_POLICY_VERSION")); assert.ok(!JSON.stringify(body).includes("pk_test_private_fixture"));
+    claims = { uid: "editor" }; db.rows.set("admins/editor", { active: true, role: "editor" });
+    assert.equal((await api.GET(request)).status, 403);
+  });
+});
 test.after(() => { Date.now = realNow; });
 
