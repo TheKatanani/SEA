@@ -41,12 +41,8 @@ export function CohortOptions({ collection, programId, locale }: { collection: s
   return (
     <section className="training-options page-shell" aria-labelledby={"cohorts-title-" + programId} id={"cohorts-" + programId} style={{ scrollMarginTop: "100px" }}>
       <div className="training-section-heading">
-        <div className="training-primary-pill">
-          <span className="training-primary-pill__dot" />
-          {en ? "Official Direct Path • Instant Seat Hold" : "المسار الأساسي والمعتمد • حجز مقعد وتأكيد فوري"}
-        </div>
-        <h2 id={"cohorts-title-" + programId}>{en ? "Available Cohorts & Instant Booking" : "الدفعات المتاحة والتسجيل الفوري المباشر"}</h2>
-        <p>{en ? "Live seat inventory with automatic closure when full. Choose a cohort and confirm with Moyasar payment." : "سعة محددة لكل دفعة مع إغلاق تلقائي عند اكتمال المقاعد. اختر الدفعة وادفع عبر ميسر لتأكيد تسجيلك فوراً."}</p>
+        <h2 id={"cohorts-title-" + programId}>{en ? "Choose your cohort" : "اختر دفعتك"}</h2>
+        <p>{en ? "Compare dates, fees and available seats, then continue to booking." : "اطّلع على المواعيد والرسوم والمقاعد المتاحة ثم تابع الحجز."}</p>
       </div>
 
       <ol className="booking-steps" aria-label={en ? "Booking steps" : "خطوات الحجز"}>
@@ -88,7 +84,6 @@ export function CohortOptions({ collection, programId, locale }: { collection: s
 
       <div className="cohort-grid">
         {items.map((c) => {
-          const percentFilled = Math.min(100, Math.round(((c.capacity - c.remaining) / c.capacity) * 100));
           return (
             <article className="cohort-card" key={c.id}>
               <div className="cohort-card__top">
@@ -133,19 +128,9 @@ export function CohortOptions({ collection, programId, locale }: { collection: s
                 </div>
               </dl>
 
-              <div className="seat-track-wrap">
-                <div className="seat-track" aria-hidden="true">
-                  <span style={{ width: `${percentFilled}%` }} />
-                </div>
-                <div className="seat-track-meta">
-                  <span>{en ? `${c.remaining} of ${c.capacity} seats remaining` : `متاح ${c.remaining} من أصل ${c.capacity} مقعداً`}</span>
-                  <span>{percentFilled}% {en ? "filled" : "مكتمل"}</span>
-                </div>
-              </div>
-
               {c.open && enabled && state === "ready" ? (
                 <Link className="button button--primary" href={"/checkout/" + c.id}>
-                  {en ? "Reserve seat & proceed to payment" : "تأكيد المقعد ومتابعة الدفع"}
+                  {en ? "Book one seat" : "احجز مقعداً واحداً"}
                   {en ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                 </Link>
               ) : (

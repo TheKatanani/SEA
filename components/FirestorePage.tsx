@@ -285,12 +285,13 @@ export async function FirestorePage({ path }: { path: string }) {
       if (!record) return null;
       return <RevealSection className="section-pad cms-page__section cms-page__section--record" key={index}><div className="page-shell"><div className="cms-page__copy">{section.heading && <h2>{section.heading}</h2>}{record ? <SingleCmsRecord record={record} locale={locale} /> : <div className="cms-collection-state">{english ? "This content is not published yet." : "هذا المحتوى غير منشور حاليًا."}</div>}</div></div></RevealSection>;
     }
-    return <div key={index} id={detailRecord && section.type === "form" && section.formType === detailPlan?.form ? "interest-form" : undefined}><PageSection section={section} locale={locale} /></div>;
+    if (bookingOptions && section.type === "form" && section.formType === detailPlan?.form) return <details key={index} id="interest-form" className="training-interest-container page-shell"><summary>{english ? "Questions or future cohorts? Register interest" : "استفسار أو اهتمام بدفعات قادمة؟"}</summary><PageSection section={section} locale={locale} /></details>;
+    return <PageSection section={section} locale={locale} key={index} />;
   }).filter(Boolean);
   const configuredForms = new Set(sections.filter((section) => section.type === "form" && section.formType).map((section) => section.formType));
   const effectivePlan = plan || detailPlan;
   const requiredFormFallback = publishedSections.length && effectivePlan?.form && !configuredForms.has(effectivePlan.form)
-    ? <div id={detailRecord ? "interest-form" : undefined}><SectionBlock title="" className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock></div>
+    ? bookingOptions ? <details id="interest-form" className="training-interest-container page-shell"><summary>{english ? "Questions or future cohorts? Register interest" : "استفسار أو اهتمام بدفعات قادمة؟"}</summary><SectionBlock title="" className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock></details> : <SectionBlock title="" className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock>
     : null;
   const brand = path === "/contact" ? await getPublishedBrandRecord() : null;
   const isProgramDetail = Boolean(detailRecord && detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection));
