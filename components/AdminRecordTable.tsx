@@ -1,0 +1,43 @@
+"use client";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, Search, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { getPath, textPairs, contentResources } from "@/lib/admin/content";
+import { inboxCollections, recordTitle, statusLabel, type RecordData } from "@/lib/admin/records";
+const text = (value: unknown) => value == null ? "" : typeof value === "object" ? "" : String(value);
+const snippet = (value: unknown) => text(value).slice(0, 170);
+export function AdminRecordTable({ collection, items, selectedId, english: en, busy, loading, filter, onFilter, statusFilter, onStatusFilter, onChoose, onCreate }: {
+  collection: string; items: RecordData[]; selectedId?: string; english: boolean; busy: boolean; loading: boolean;
+  filter: string; onFilter: (value: string) => void; statusFilter: string; onStatusFilter: (value: string) => void;
+  onChoose: (item: RecordData) => void; onCreate?: () => void;
+}) {
+  const [sort, setSort] = useState(""), [descending, setDescending] = useState(false), [page, setPage] = useState(0);
+  const inbox = inboxCollections.has(collection), audit = collection === "audit_logs";
+  const name = contentResources.find(([id]) => id === collection)?.[en ? 2 : 1] || "";
+  const date = (value: unknown) => { const raw = text(value); return raw && Number.isFinite(Date.parse(raw)) ? new Intl.DateTimeFormat(en ? "en-GB" : "ar-SA", { dateStyle: "medium", calendar: "gregory" }).format(new Date(raw)) : "—"; };
+  const columns = inbox ? [
+    { id: "name", label: en ? "Name / organization" : "الاسم / المنشأة", get: (item: RecordData) => recordTitle(item, en) },
+    { id: "contact", label: en ? "Contact details" : "بيانات التواصل", get: (item: RecordData) => [getPath(item, "fields.email"), getPath(item, "fields.phone") || getPath(item, "fields.mobile")].filter(Boolean).join(" · ") },
+    { id: "details", label: en ? "Request / message" : "الطلب / الرسالة", get: (item: RecordData) => snippet(getPath(item, "fields.program") || getPath(item, "fields.subject") || getPath(item, "fields.message")) },
+    { id: "date", label: en ? "Received" : "تاريخ الاستلام", get: (item: RecordData) => text(item.createdAt), date: true },
+  ] : audit ? [
+    { id: "name", label: en ? "Activity" : "النشاط", get: (item: RecordData) => text(item.action) },
+    { id: "details", label: en ? "Section" : "القسم", get: (item: RecordData) => contentResources.find(([id]) => id === item.collection)?.[en ? 2 : 1] || text(item.collection) },
+    { id: "date", label: en ? "Date" : "التاريخ", get: (item: RecordData) => text(item.at), date: true },
+  ] : [
+    { id: "name", label: en ? "Content" : "المحتوى", get: (item: RecordData) => recordTitle(item, en) },
+    { id: "details", label: collection === "pages" ? en ? "Page address" : "عنوان الصفحة" : en ? "Summary" : "نبذة", get: (item: RecordData) => collection === "pages" ? text(item.path) : snippet(getPath(item, "locales." + (en ? "en" : "ar") + ".description") || getPath(item, "locales.ar.summary") || getPath(item, "locales.ar.answer") || getPath(item, "alt." + (en ? "en" : "ar")) || getPath(item, "locales.ar.role")) },
+    { id: "language", label: en ? "Languages" : "اللغات", get: (item: RecordData) => { const pairs = textPairs(collection, item, "ar"), reverse = textPairs(collection, item, "en"); const populated = pairs.filter(pair => pair.source.trim() || pair.target.trim()); const complete = populated.filter(pair => pair.source.trim() && pair.target.trim()).length; return populated.length ? complete === populated.length && !reverse.some(pair => pair.source.trim() && !pair.target.trim()) ? en ? "Arabic & English" : "العربية والإنجليزية" : (en ? "Translation incomplete" : "ترجمة غير مكتملة") + " (" + complete + "/" + populated.length + ")" : "—"; } },
+    { id: "date", label: en ? "Updated" : "آخر تعديل", get: (item: RecordData) => text(item.updatedAt || item.createdAt), date: true },
+  ];
+  const sorted = [...items].sort((a, b) => { const column = columns.find(v => v.id === sort); return column ? column.get(a).localeCompare(column.get(b), en ? "en" : "ar", { numeric: true }) * (descending ? -1 : 1) : 0; });
+  const pages = Math.max(1, Math.ceil(items.length / 10)), currentPage = Math.min(page, pages - 1), visible = sorted.slice(currentPage * 10, currentPage * 10 + 10);
+  return <section className="admin-data-panel" aria-label={name}>
+    <div className="admin-data-heading"><h3>{name}<span>{items.length}</span></h3><div className="admin-data-filters"><label className="admin-search"><Search size={16} /><input aria-label={en ? "Search records" : "بحث في السجلات"} type="search" placeholder={en ? "Search records…" : "بحث في السجلات…"} value={filter} onChange={event => { onFilter(event.target.value); setPage(0); }} /></label>{!audit && <select aria-label={en ? "Status filter" : "تصفية الحالة"} value={statusFilter} onChange={event => { onStatusFilter(event.target.value); setPage(0); }}><option value="all">{en ? "All statuses" : "جميع الحالات"}</option>{(inbox ? ["new", "in_review", "contacted", "accepted", "closed"] : ["draft", "published"]).map(v => <option key={v} value={v}>{statusLabel(v, en)}</option>)}</select>}</div></div>
+    <div className="admin-data-scroll" tabIndex={0} role="region" aria-label={en ? "Records table" : "جدول السجلات"}><table className="admin-data-table" aria-busy={loading}>
+      <thead><tr>{columns.map(column => <th key={column.id} scope="col" aria-sort={sort === column.id ? descending ? "descending" : "ascending" : "none"}><button type="button" onClick={() => { setSort(column.id); setDescending(sort === column.id ? !descending : false); }}>{column.label}{sort === column.id && (descending ? <ArrowDown size={12} /> : <ArrowUp size={12} />)}</button></th>)}{!audit && <th scope="col">{en ? "Status" : "الحالة"}</th>}<th scope="col">{en ? "Action" : "الإجراء"}</th></tr></thead>
+      <tbody>{visible.map(item => <tr key={item.id} className={selectedId === item.id ? "is-selected" : ""}>{columns.map(column => <td key={column.id}>{column.id === "name" ? <div className="admin-table-name">{collection === "media" && item.resourceType !== "video" && Boolean(item.url) && <img src={text(item.url)} alt="" width={48} height={38} loading="lazy" />}<div><button type="button" className="admin-table-select" disabled={busy} onClick={() => onChoose(item)}>{column.get(item)}</button>{!inbox && !audit && <small dir={en ? "rtl" : "ltr"}>{text(getPath(item, "locales." + (en ? "ar" : "en") + ".title") || getPath(item, "locales." + (en ? "ar" : "en") + ".question"))}</small>}</div></div> : column.date ? date(column.get(item)) : column.get(item) || "—"}</td>)}{!audit && <td><span className={"admin-table-status status-" + text(item.status)}>{statusLabel(item.status, en)}</span>{Boolean(item.hasDraft) && <small className="admin-table-draft">{en ? "Unpublished edits" : "تعديلات غير منشورة"}</small>}</td>}<td><button type="button" className="admin-secondary-button" disabled={busy} onClick={() => onChoose(item)}><Pencil size={13} />{audit ? en ? "Details" : "التفاصيل" : inbox ? en ? "Follow up" : "متابعة" : en ? "Edit" : "تعديل"}</button></td></tr>)}
+        {!visible.length && <tr><td colSpan={columns.length + (audit ? 1 : 2)} className="admin-data-empty">{loading ? en ? "Loading records…" : "جارٍ تحميل السجلات…" : filter || statusFilter !== "all" ? en ? "No matching records. Adjust the search or filter." : "لا توجد نتائج مطابقة. عدّل البحث أو التصفية." : <><strong>{en ? "No records yet" : "لا توجد سجلات بعد"}</strong><p>{inbox ? en ? "Incoming requests will appear here automatically." : "ستظهر الطلبات الواردة هنا تلقائياً." : en ? "Add your first item to get started." : "أضف أول عنصر للبدء."}</p>{onCreate && <button type="button" className="admin-secondary-button" onClick={onCreate}>{en ? "Add first item" : "إضافة أول عنصر"}</button>}</>}</td></tr>}
+      </tbody></table></div>
+    <div className="admin-data-footer"><small>{en ? "Showing " : "عرض "}{items.length ? currentPage * 10 + 1 : 0}–{Math.min((currentPage + 1) * 10, items.length)}{en ? " of " : " من "}{items.length}{en ? " · Up to 100 loaded records" : " · حتى 100 سجل محمّل"}</small>{pages > 1 && <nav aria-label={en ? "Table pages" : "صفحات الجدول"}><button type="button" className="admin-icon-button" aria-label={en ? "Previous page" : "الصفحة السابقة"} disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={16} /></button><span>{currentPage + 1}/{pages}</span><button type="button" className="admin-icon-button" aria-label={en ? "Next page" : "الصفحة التالية"} disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}><ChevronRight size={16} /></button></nav>}</div>
+  </section>;
+}

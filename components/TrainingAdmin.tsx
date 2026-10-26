@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check, Sparkles } from "lucide-react";
 import type { PublicCohort } from "./CohortOptions";
-import { ContentAssistant } from "./ContentAssistant";
-import { textPairs, type ContentRecord, type Locale, type TranslationState } from "@/lib/admin/content";
+import { ContentAssistant, BilingualField } from "./ContentAssistant";
+import { textPairs, type ContentRecord, type TranslationState } from "@/lib/admin/content";
 
 type Row = Record<string, unknown> & { id: string };
 const empty = { programCollection: "programs", programId: "", cohortCode: "", titleAr: "", titleEn: "", price: "", start: "", end: "", scheduleAr: "", scheduleEn: "", locationType: "in_person", venueAr: "", venueEn: "", capacity: "", status: "draft", registrationOpen: false, id: "" };
@@ -17,7 +17,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   const [allCohorts, setAllCohorts] = useState<Row[]>([]);
   const [form, setForm] = useState(empty);
   const [savedForm, setSavedForm] = useState(empty);
-  const [editLocale, setEditLocale] = useState<Locale>("ar");
+  const [reviewedTranslations, setReviewedTranslations] = useState<string[]>([]);
   const [cohortReview, setCohortReview] = useState(false), [cohortReviewed, setCohortReviewed] = useState(false);
   const [translationState, setTranslationState] = useState<TranslationState>({});
   useEffect(() => { onDirtyChange?.(JSON.stringify(form) !== JSON.stringify(savedForm)); setCohortReviewed(false); return () => onDirtyChange?.(false); }, [form, savedForm, onDirtyChange]);
@@ -198,7 +198,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
           venueEn: form.venueEn,
           capacity: Number(form.capacity),
           status: publish ? "published" : "draft",
-          translationReview: { reviewed: publish ? (["ar", "en"] as const).flatMap(lang => textPairs("cohorts", form, lang).filter(p => p.source.trim() && p.target.trim()).map(p => lang + ":" + p.key)) : [] },
+          translationReview: { reviewed: publish ? (["ar", "en"] as const).flatMap(lang => textPairs("cohorts", form, lang).filter(p => p.source.trim() && p.target.trim()).map(p => lang + ":" + p.key)) : reviewedTranslations },
           registrationOpen: form.registrationOpen,
         }),
       });
@@ -210,7 +210,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
         ...prev,
         { id: res?.id || String(Date.now()), cohortCode: savedCode, programId: savedProg, programCollection: savedCol }
       ]);
-      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({});
+      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({}); setReviewedTranslations([]);
       await load();
       request("/api/admin/training?collection=cohorts").then((r) => {
         if (Array.isArray(r.items)) setAllCohorts(r.items);
@@ -573,7 +573,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
             </button>
           </div>
 
-          <div className="editor-language-tabs" role="group" aria-label={en ? "Editing language" : "لغة التحرير"}>{(["ar", "en"] as const).map(lang => <button type="button" key={lang} aria-pressed={editLocale === lang} className={editLocale === lang ? "is-active" : ""} onClick={() => setEditLocale(lang)}>{lang === "ar" ? "العربية" : "English"}</button>)}</div>
+          <ContentAssistant key={form.id || "new"} collection="cohorts" value={form} baseline={savedForm} english={en} available={aiAvailable} metadata={translationState} reviewed={reviewedTranslations} onReview={setReviewedTranslations} onChange={next => { setForm(next as unknown as typeof empty); setReviewedTranslations([]); }} request={request}>
           <div className="training-input-grid">
             <label>
               {en ? "Program" : "البرنامج الأكاديمي"}
@@ -603,14 +603,12 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
               </select>
             </label>
             {textInput("cohortCode", en ? "Cohort Code (e.g. CRD-01)" : "رمز الدفعة (مثال: CRD-01)")}
-            {editLocale === "ar" && textInput("titleAr", "اسم الدفعة بالعربية")}
-            {editLocale === "en" && textInput("titleEn", "Cohort title in English")}
+
             {textInput("price", en ? "Fee in SAR (e.g. 1)" : "الرسوم بالريال السعودي", "number")}
             {textInput("capacity", en ? "Capacity (e.g. 25)" : "السعة القصوى للمقاعد", "number")}
             {textInput("start", en ? "Starts (Riyadh Time)" : "البداية بتوقيت الرياض", "datetime-local")}
             {textInput("end", en ? "Ends (Riyadh Time)" : "النهاية بتوقيت الرياض", "datetime-local")}
-            {editLocale === "ar" && textInput("scheduleAr", "الجدول بالعربية")}
-            {editLocale === "en" && textInput("scheduleEn", "Schedule in English")}
+
             <label>
               {en ? "Delivery Mode" : "نمط التدريب"}
               <select value={form.locationType} onChange={(e) => setForm((v) => ({ ...v, locationType: e.target.value }))}>
@@ -619,11 +617,10 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
               </select>
             </label>
 
-            {editLocale === "ar" && textInput("venueAr", "الموقع بالعربية")}
-            {editLocale === "en" && textInput("venueEn", "Location in English")}
+
           </div>
 
-          <ContentAssistant key={(form.id || "new") + editLocale} collection="cohorts" value={form} baseline={savedForm} locale={editLocale} english={en} available={aiAvailable} metadata={translationState} onReview={() => {}} onChange={next => setForm(next as unknown as typeof empty)} request={request} />
+          <div className="cohort-bilingual-fields"><BilingualField fieldKey="title" label={en ? "Cohort title" : "اسم الدفعة"} required /><BilingualField fieldKey="schedule" label={en ? "Schedule" : "الجدول"} multiline required /><BilingualField fieldKey="venue" label={en ? "Venue" : "الموقع"} required /></div></ContentAssistant>
           {cohortReview && <section className="publish-review"><h3>{en ? "Review cohort details" : "مراجعة بيانات الدفعة"}</h3><div className="publish-language-preview"><div dir="rtl"><strong>{form.titleAr}</strong><p>{form.scheduleAr}</p><p>{form.venueAr}</p></div><div dir="ltr"><strong>{form.titleEn}</strong><p>{form.scheduleEn}</p><p>{form.venueEn}</p></div></div><p>{form.price} SAR · {form.capacity} {en ? "seats" : "مقاعد"}</p><p dir="ltr">{form.start} — {form.end} (Asia/Riyadh)</p><label className="publish-confirm"><input type="checkbox" checked={cohortReviewed} onChange={e => setCohortReviewed(e.target.checked)} />{en ? "I confirmed both languages, fee, dates, venue and capacity." : "راجعت اللغتين والرسوم والمواعيد والموقع والسعة."}</label><button type="button" className="button button--primary" disabled={busy || !cohortReviewed} onClick={e => void save(e, true)}>{en ? "Publish reviewed cohort" : "نشر الدفعة المراجعة"}</button></section>}
           <label className="training-consent" style={{ marginTop: "12px" }}>
             <input type="checkbox" checked={form.registrationOpen} onChange={(e) => setForm((v) => ({ ...v, registrationOpen: e.target.checked }))} />
