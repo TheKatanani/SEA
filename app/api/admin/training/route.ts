@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { requireAdmin, authErrorResponse } from "@/lib/firebase/authorization";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { cohortSchema, idSchema, publicCohort } from "@/lib/booking/domain";
+import { cohortSchema, idSchema, publicCohort, type Cohort } from "@/lib/booking/domain";
 import { getCohort, saveCohort } from "@/lib/booking/service";
 import { assertBookingEnabled, bookingResponse } from "@/lib/booking/security";
 import { trainingQuery } from "@/lib/booking/admin-query";
@@ -44,7 +44,13 @@ export async function GET(request: NextRequest) {
         return Response.json({ cohorts: 0, confirmed: 0, pending: 0, revenueMinor: 0 }, { headers: { "Cache-Control": "private, no-store" } });
       }
     }
-    if (request.nextUrl.searchParams.has("cohortId") && !request.nextUrl.searchParams.has("collection")) return Response.json({ cohort: publicCohort(await getCohort(idSchema.parse(request.nextUrl.searchParams.get("cohortId")))) });
+    if (request.nextUrl.searchParams.has("cohortId") && !request.nextUrl.searchParams.has("collection")) {
+      const id = idSchema.parse(request.nextUrl.searchParams.get("cohortId"));
+      const current = await getCohort(id);
+      const [draft, metadata] = await Promise.all([getAdminDb().collection("content_drafts").doc("cohorts__" + id).get(), getAdminDb().collection("content_translation_state").doc("cohorts__" + id).get()]);
+      const cohort = { ...current, ...(draft.data()?.data || {}), confirmedSeats: current.confirmedSeats, holds: current.holds };
+      return Response.json({ cohort: publicCohort(cohort), translationState: metadata.data()?.fields || {} }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     const { collection, query: base, rawQuery } = trainingQuery(request);
     let query = base;
     const cursor = request.nextUrl.searchParams.get("cursor");
@@ -76,11 +82,15 @@ export async function GET(request: NextRequest) {
         throw queryErr;
       }
     }
-    return Response.json({ items: docs.map((doc) => {
-      const value = { ...doc.data(), id: doc.id };
-      if (collection === "cohorts") return publicCohort(value as Parameters<typeof publicCohort>[0]);
+    const drafts = collection === "cohorts" && docs.length ? await getAdminDb().getAll(...docs.map(doc => getAdminDb().collection("content_drafts").doc("cohorts__" + doc.id))) : [];
+    const bookingIds = collection === "payments" ? [...new Set(docs.map(doc => String(doc.data().bookingId || "")).filter(id => idSchema.safeParse(id).success))] : [];
+    const linkedBookings = bookingIds.length ? await getAdminDb().getAll(...bookingIds.map(id => getAdminDb().collection("bookings").doc(id))) : [];
+    const bookingLabels = new Map(linkedBookings.map(doc => [doc.id, { bookingNumber: doc.data()?.bookingNumber || "", learnerName: doc.data()?.attendee?.fullName || "" }]));
+    return Response.json({ items: docs.map((doc, index) => {
+      const value = { ...doc.data(), id: doc.id } as Cohort;
+      if (collection === "cohorts") return { ...publicCohort(value), hasDraft: drafts[index]?.exists || false };
       const { searchTokens: _tokens, ...item } = value as Record<string, unknown>;
-      return item;
+      return collection === "payments" ? { ...item, ...bookingLabels.get(String(item.bookingId)) } : item;
     }), nextCursor: hasMore ? docs[docs.length - 1].id : null }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error instanceof z.ZodError) return Response.json({ error: "INVALID_QUERY" }, { status: 400 });
@@ -93,7 +103,9 @@ export async function POST(request: NextRequest) {
     const identity = await requireAdmin(request, ["owner", "admin"]);
     const raw = await request.text();
     if (Buffer.byteLength(raw) > 12000) return Response.json({ error: "REQUEST_TOO_LARGE" }, { status: 413 });
-    const id = await saveCohort(cohortSchema.parse(JSON.parse(raw)), identity.uid);
+    const { translationReview, ...data } = JSON.parse(raw);
+    const review = z.object({ reviewed: z.array(z.string().max(170)).max(30), aiPaths: z.array(z.string().max(170)).max(30).optional() }).strict().parse(translationReview || { reviewed: [] });
+    const id = await saveCohort(cohortSchema.parse(data), identity.uid, review);
     return Response.json({ ok: true, id });
   } catch (error) {
     if (error instanceof z.ZodError || error instanceof SyntaxError) return Response.json({ error: "INVALID_COHORT", details: error instanceof z.ZodError ? error.issues.map((v) => ({ path: v.path, message: v.message })) : [] }, { status: 400 });

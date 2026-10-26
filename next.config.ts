@@ -15,6 +15,7 @@ const programRoutes = new Set(content.programs.map((program) => program.slug_nex
 const routeMap = migration.url_redirects_and_routes as Array<{ legacy: string; next: string }>;
 
 const nextConfig: NextConfig = {
+  webpack(config) { if (process.env.SEA_DISABLE_BUILD_CACHE === "true") config.cache = false; return config; },
   poweredByHeader: false,
   outputFileTracingRoot: process.cwd(),
   serverExternalPackages: ["firebase-admin", "exceljs"],

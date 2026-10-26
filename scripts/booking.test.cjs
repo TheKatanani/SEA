@@ -177,7 +177,7 @@ test("audit log DELETE returns 405 without deleting data", async () => {
 });
 test("saving a draft keeps the published page; publishing replaces it atomically", async () => {
   reset(); db.rows.set("pages/about", { status: "published", path: "/about", locales: { ar: { title: "قديم" }, en: { title: "Old" } }, createdAt: now });
-  const request = (status) => ({ headers: new Headers({ Authorization: "Bearer test" }), nextUrl: new URL("http://localhost/api/admin/data?collection=pages"), json: async () => ({ id: "about", data: { status, path: "/about", locales: { ar: { title: "جديد" }, en: { title: "New" } } } }) });
+  const request = (status) => ({ headers: new Headers({ Authorization: "Bearer test" }), nextUrl: new URL("http://localhost/api/admin/data?collection=pages"), json: async () => ({ id: "about", data: { status, path: "/about", locales: { ar: { title: "جديد" }, en: { title: "New" } } }, translationReview: { reviewed: status === "published" ? ["ar:title", "en:title"] : [] } }) });
   assert.equal((await adminData.POST(request("draft"))).status, 200);
   assert.equal(db.rows.get("pages/about").locales.en.title, "Old");
   assert.equal(db.rows.get("content_drafts/pages__about").data.locales.en.title, "New");

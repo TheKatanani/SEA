@@ -11,7 +11,7 @@ const translation = z.object({
   category: text.optional(), status: text.optional(), duration: text.optional(), hoursAndSchedule: text.optional(), targetAudience: text.optional(),
   outcomes: text.optional(), careers: text.optional(), requirements: z.union([text, z.array(text).max(100)]).optional(), documents: z.array(text).max(100).optional(), pillars: z.array(text).max(100).optional(),
   sections: z.array(section).max(30).optional(), fields: z.array(field).max(50).optional(), buttonLabel: z.string().max(200).optional(),
-  footer: z.record(z.string().max(1000)).optional(), nav: z.record(z.string().max(300)).optional(), contact: contact.optional(),
+  footer: z.record(z.string(), z.string().max(1000)).optional(), nav: z.record(z.string(), z.string().max(300)).optional(), contact: contact.optional(),
 });
 const locales = z.object({ ar: translation.optional(), en: translation.optional() });
 const navigation = z.array(z.object({ href: url, sortOrder: z.number().int().min(0).max(1000), locales: z.object({ ar: z.object({ label: z.string().max(200) }), en: z.object({ label: z.string().max(200) }) }) })).max(50);
@@ -25,7 +25,7 @@ const schema = z.object({
   formType: z.string().max(100).optional(), title: text.optional(), name: text.optional(), description: text.optional(), statusLabel: text.optional(),
   logoUrl: url.optional(), footerLogoUrl: url.optional(), faviconUrl: url.optional(), logoPublicId: z.string().max(300).optional(), footerLogoPublicId: z.string().max(300).optional(), faviconPublicId: z.string().max(300).optional(),
   primaryColor: z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), accentColor: z.string().regex(/^#[a-fA-F0-9]{6}$/).optional(), fontArabic: z.string().regex(/^[\w -]{1,60}$/).optional(), fontEnglish: z.string().regex(/^[\w -]{1,60}$/).optional(),
-  contact: contact.optional(), socialLinks: z.record(url).optional(), navigation: navigation.optional(), footerLinks: navigation.optional(),
+  contact: contact.optional(), socialLinks: z.record(z.string(), url).optional(), navigation: navigation.optional(), footerLinks: navigation.optional(),
   alt: z.object({ ar: z.string().max(1000).optional(), en: z.string().max(1000).optional() }).optional(),
 });
 export function validateCmsRecord(collection: string, data: Record<string, unknown>) {

@@ -3,17 +3,24 @@ import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check, Sparkles } from "lucide-react";
 import type { PublicCohort } from "./CohortOptions";
+import { ContentAssistant } from "./ContentAssistant";
+import { textPairs, type ContentRecord, type Locale, type TranslationState } from "@/lib/admin/content";
 
 type Row = Record<string, unknown> & { id: string };
-const empty = { programCollection: "programs", programId: "", cohortCode: "", titleAr: "", titleEn: "", price: "", start: "", end: "", scheduleAr: "", scheduleEn: "", locationType: "in_person", venueAr: "فرع الربوة - الرياض", venueEn: "Al-Rabwah Campus, Riyadh", capacity: "25", status: "draft", registrationOpen: false, id: "" };
+const empty = { programCollection: "programs", programId: "", cohortCode: "", titleAr: "", titleEn: "", price: "", start: "", end: "", scheduleAr: "", scheduleEn: "", locationType: "in_person", venueAr: "", venueEn: "", capacity: "", status: "draft", registrationOpen: false, id: "" };
 const localDate = (value: string) => new Date(Date.parse(value) + 3 * 3600000).toISOString().slice(0, 16);
 
-export function TrainingAdmin({ user, english: en }: { user: User; english: boolean }) {
-  const [collection, setCollection] = useState("cohorts");
+export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirtyChange, aiAvailable = false }: { user: User; english: boolean; activeTab?: string; onDirtyChange?: (value: boolean) => void; aiAvailable?: boolean }) {
+  const collection = activeTab;
   const [items, setItems] = useState<Row[]>([]);
   const [programs, setPrograms] = useState<Row[]>([]);
   const [allCohorts, setAllCohorts] = useState<Row[]>([]);
   const [form, setForm] = useState(empty);
+  const [savedForm, setSavedForm] = useState(empty);
+  const [editLocale, setEditLocale] = useState<Locale>("ar");
+  const [cohortReview, setCohortReview] = useState(false), [cohortReviewed, setCohortReviewed] = useState(false);
+  const [translationState, setTranslationState] = useState<TranslationState>({});
+  useEffect(() => { onDirtyChange?.(JSON.stringify(form) !== JSON.stringify(savedForm)); setCohortReviewed(false); return () => onDirtyChange?.(false); }, [form, savedForm, onDirtyChange]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -23,8 +30,6 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [appliedQ, setAppliedQ] = useState("");
-  const [overview, setOverview] = useState<Record<string, number>>({});
-  const [setup, setSetup] = useState<{ bookingReady: boolean; missing: string[]; demo: boolean; applicationsEnabled: boolean; webhookConfigured: boolean } | null>(null);
 
   const request = useCallback(
     async (url: string, init?: RequestInit) => {
@@ -75,8 +80,6 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
   }, [load]);
 
   useEffect(() => {
-    request("/api/admin/training?overview=true").then(setOverview).catch(() => {});
-    request("/api/admin/training?setup=true").then(setSetup).catch(() => {});
     Promise.all(
       ["programs", "courses"].map(async (c) => {
         const r = await request("/api/admin/data?collection=" + c);
@@ -147,19 +150,6 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
     const arabicOrdinals = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة", "الحادية عشرة", "الثانية عشرة"];
     const ordinalAr = arabicOrdinals[candidateNum - 1] || `رقم ${candidateNum}`;
 
-    // Target start date: next Sunday at 09:00 AM Riyadh time
-    const targetStart = new Date();
-    const daysUntilSunday = ((7 - targetStart.getDay()) % 7) || 7;
-    targetStart.setDate(targetStart.getDate() + daysUntilSunday);
-    targetStart.setHours(9, 0, 0, 0);
-    const startIso = new Date(targetStart.getTime() + 3 * 3600000).toISOString().slice(0, 16);
-
-    // Target end date: 4 weeks after start date at 15:00 Riyadh time
-    const targetEnd = new Date(targetStart);
-    targetEnd.setDate(targetEnd.getDate() + 28);
-    targetEnd.setHours(15, 0, 0, 0);
-    const endIso = new Date(targetEnd.getTime() + 3 * 3600000).toISOString().slice(0, 16);
-
     setForm((current) => ({
       ...current,
       id: current.id || "",
@@ -168,17 +158,8 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       cohortCode: current.cohortCode && current.id ? current.cohortCode : candidateCode,
       titleAr: `الدفعة ${ordinalAr} - ${programTitleAr}`,
       titleEn: `Cohort ${candidateNum} - ${programTitleEn}`,
-      price: current.price || (setup?.demo ? "1" : "1500"),
-      capacity: current.capacity || "25",
-      start: current.start || startIso,
-      end: current.end || endIso,
-      scheduleAr: current.scheduleAr || "الأحد إلى الخميس • 9:00 ص - 3:00 م",
-      scheduleEn: current.scheduleEn || "Sunday to Thursday • 9:00 AM - 3:00 PM",
-      locationType: "in_person",
-      venueAr: "مقر الأكاديمية - فرع الربوة، الرياض",
-      venueEn: "SEA Campus - Al-Rabwah, Riyadh",
-      status: "published",
-      registrationOpen: true,
+      status: current.id ? current.status : "draft",
+      registrationOpen: current.id ? current.registrationOpen : false,
     }));
 
     setNotice(
@@ -188,8 +169,10 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
     );
   }
 
-  async function save(event: React.FormEvent) {
+  async function save(event: React.FormEvent, publish = false) {
     event.preventDefault();
+    if (!document.querySelector<HTMLFormElement>("#cohort-editor")?.reportValidity()) return;
+    if (publish && !cohortReviewed) { setError("REVIEW_REQUIRED"); return; }
     setBusy(true);
     setError("");
     setNotice("");
@@ -214,7 +197,8 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
           venueAr: form.venueAr,
           venueEn: form.venueEn,
           capacity: Number(form.capacity),
-          status: form.status,
+          status: publish ? "published" : "draft",
+          translationReview: { reviewed: publish ? (["ar", "en"] as const).flatMap(lang => textPairs("cohorts", form, lang).filter(p => p.source.trim() && p.target.trim()).map(p => lang + ":" + p.key)) : [] },
           registrationOpen: form.registrationOpen,
         }),
       });
@@ -226,7 +210,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
         ...prev,
         { id: res?.id || String(Date.now()), cohortCode: savedCode, programId: savedProg, programCollection: savedCol }
       ]);
-      setForm(empty);
+      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({});
       await load();
       request("/api/admin/training?collection=cohorts").then((r) => {
         if (Array.isArray(r.items)) setAllCohorts(r.items);
@@ -238,9 +222,13 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
     }
   }
 
-  function edit(row: Row) {
-    const c = row as unknown as PublicCohort;
-    setForm({
+  async function edit(row: Row) {
+    if (JSON.stringify(form) !== JSON.stringify(savedForm) && !window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) return;
+    setBusy(true); setError("");
+    let c: PublicCohort;
+    try { const result = await request("/api/admin/training?cohortId=" + encodeURIComponent(row.id)); c = result.cohort; setTranslationState(result.translationState || {}); }
+    catch { setError("SERVICE_UNAVAILABLE"); setBusy(false); return; }
+    const next = {
       id: c.id,
       programCollection: c.programCollection,
       programId: c.programId,
@@ -258,7 +246,9 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       capacity: String(c.capacity),
       status: c.status,
       registrationOpen: c.registrationOpen,
-    });
+    };
+    setForm(next); setSavedForm(next); setCohortReview(false);
+    setBusy(false);
     document.querySelector("#cohort-editor")?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -330,6 +320,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
       <input
         type={type}
         required
+        readOnly={name === "cohortCode" && Boolean(form.id)}
         value={String(form[name])}
         onChange={(e) => setForm((v) => ({ ...v, [name]: e.target.value }))}
         {...(type === "number" ? { min: name === "capacity" ? 1 : 1, step: name === "capacity" ? 1 : 0.01, max: name === "capacity" ? 500 : 100000 } : {})}
@@ -343,124 +334,6 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
 
   return (
     <div className="training-admin">
-      {setup && (
-        <section className="training-setup" aria-label={en ? "Booking setup" : "جاهزية الحجز"}>
-          <h2>
-            {en ? "Booking setup" : "جاهزية الحجز"}
-            {setup.demo ? (en ? " · Sandbox" : " · تجريبي") : ""}
-          </h2>
-          <p>
-            {setup.bookingReady
-              ? en
-                ? "Payment configuration is active. Publish a cohort and enable registration to open online booking."
-                : "إعدادات الدفع جاهزة ونشطة. انشر دفعة وافتح تسجيلها ليظهر زر الحجز في صفحة البرنامج."
-              : en
-              ? "Complete these deployment settings to enable booking:"
-              : "أكمل إعدادات بيئة النشر التالية لتفعيل زر الحجز:"}
-          </p>
-          {setup.missing.length > 0 && (
-            <ul>
-              {setup.missing.map((key) => (
-                <li key={key}>
-                  <code>{key}</code>
-                </li>
-              ))}
-            </ul>
-          )}
-          {!setup.webhookConfigured && <p>{en ? "Moyasar webhook secret is not configured yet (optional for testing)." : "لم يُضبط سر إشعارات ميسر بعد (اختياري للاختبار)."}</p>}
-          {!setup.applicationsEnabled && <p>{en ? "Interest submissions are disabled (APPLICATIONS_ENABLED)." : "استقبال نماذج الاهتمام معطل (APPLICATIONS_ENABLED)."}</p>}
-        </section>
-      )}
-
-      {/* Executive Metric Cards */}
-      <div className="training-metrics">
-        <article>
-          <div className="metric-icon-wrap metric-icon-wrap--cohorts">
-            <Layers size={22} />
-          </div>
-          <div className="metric-body">
-            <span>{en ? "Cohorts" : "الدفعات التدريبية"}</span>
-            <strong>{overview.cohorts ?? "—"}</strong>
-          </div>
-        </article>
-
-        <article>
-          <div className="metric-icon-wrap metric-icon-wrap--confirmed">
-            <CheckCircle2 size={22} />
-          </div>
-          <div className="metric-body">
-            <span>{en ? "Confirmed Seats" : "المقاعد المؤكدة"}</span>
-            <strong style={{ color: "#16a34a" }}>{overview.confirmed ?? "—"}</strong>
-          </div>
-        </article>
-
-        <article>
-          <div className="metric-icon-wrap metric-icon-wrap--pending">
-            <Clock size={22} />
-          </div>
-          <div className="metric-body">
-            <span>{en ? "Active Holds" : "حجوزات مؤقتة"}</span>
-            <strong>{overview.pending ?? "—"}</strong>
-          </div>
-        </article>
-
-        <article>
-          <div className="metric-icon-wrap metric-icon-wrap--revenue">
-            <CreditCard size={22} />
-          </div>
-          <div className="metric-body">
-            <span>{en ? "Net Payments" : "صافي المدفوعات"}</span>
-            <strong>{new Intl.NumberFormat(en ? "en-SA" : "ar-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format((overview.revenueMinor || 0) / 100)}</strong>
-          </div>
-        </article>
-      </div>
-
-      {/* Segmented Tabs Navigation */}
-      <nav className="training-tabs" aria-label={en ? "Training management" : "إدارة التدريب"}>
-        <button
-          className={collection === "cohorts" ? "is-active" : ""}
-          onClick={() => {
-            setCollection("cohorts");
-            setStatus("");
-            setAppliedQ("");
-            setQ("");
-            setCohortFilter("");
-            setCohortQuery("");
-          }}
-        >
-          <Layers size={16} />
-          <span>{en ? "Cohorts & Capacity" : "الدفعات والسعة"}</span>
-        </button>
-        <button
-          className={collection === "bookings" ? "is-active" : ""}
-          onClick={() => {
-            setCollection("bookings");
-            setStatus("");
-            setAppliedQ("");
-            setQ("");
-            setCohortFilter("");
-            setCohortQuery("");
-          }}
-        >
-          <Users size={16} />
-          <span>{en ? "Bookings & Registrants" : "الحجوزات والمسجلون"}</span>
-        </button>
-        <button
-          className={collection === "payments" ? "is-active" : ""}
-          onClick={() => {
-            setCollection("payments");
-            setStatus("");
-            setAppliedQ("");
-            setQ("");
-            setCohortFilter("");
-            setCohortQuery("");
-          }}
-        >
-          <CreditCard size={16} />
-          <span>{en ? "Payments" : "المدفوعات"}</span>
-        </button>
-      </nav>
-
       {/* Toolbar */}
       <div className="training-toolbar">
         {collection === "bookings" && (
@@ -477,12 +350,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            <input
-              aria-label={en ? "Cohort ID" : "معرّف الدفعة"}
-              placeholder={en ? "Cohort ID (optional)" : "معرّف الدفعة (اختياري)"}
-              value={cohortQuery}
-              onChange={(e) => setCohortQuery(e.target.value)}
-            />
+<select aria-label={en ? "Cohort" : "الدفعة"} value={cohortQuery} onChange={e => setCohortQuery(e.target.value)}><option value="">{en ? "All cohorts" : "جميع الدفعات"}</option>{allCohorts.map(c => <option key={c.id} value={c.id}>{String(en ? c.titleEn || c.cohortCode : c.titleAr || c.cohortCode)}</option>)}</select>
             <button className="btn-export" type="submit">
               <Search size={14} />
               {en ? "Search" : "بحث"}
@@ -533,6 +401,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
             PROGRAM_NOT_PUBLISHED: en ? "Publish the program before enabling the cohort." : "انشر البرنامج قبل تفعيل الدفعة.",
             COHORT_CODE_EXISTS: en ? "This cohort code already exists." : "رمز الدفعة مستخدم مسبقاً.",
             COHORT_CODE_IMMUTABLE: en ? "The cohort code cannot be changed after creation." : "لا يمكن تغيير رمز الدفعة بعد إنشائها.",
+            REVIEW_REQUIRED: en ? "Review and confirm the cohort details before publishing." : "راجع بيانات الدفعة وأكدها قبل النشر.",
             INVALID_COHORT: en ? "Check all dates, fees and required fields." : "راجع المواعيد والرسوم والحقول الإلزامية.",
             REFUND_OUTCOME_PENDING_RECONCILE_FIRST: en ? "The previous refund needs reconciliation in Moyasar before another request." : "تحتاج نتيجة الاسترجاع السابقة للمراجعة في ميسر قبل طلب آخر.",
             SERVICE_UNAVAILABLE: en ? "The service or its database indexes are not ready. Please try again later." : "الخدمة أو فهارس قاعدة البيانات غير جاهزة. يرجى المحاولة لاحقاً.",
@@ -555,8 +424,8 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                   ? ["Reference / Learner", "Email / Mobile / ID", "Cohort", "Status", "Amount"]
                   : ["المرجع / المتدرب", "البريد / الجوال / الهوية", "الدفعة", "الحالة", "المبلغ"]
                 : en
-                ? ["Payment ID", "Booking Ref", "Status", "Amount", "Action"]
-                : ["معرّف العملية", "رقم الحجز", "الحالة", "المبلغ", "الإجراء"]
+                ? ["Updated", "Booking / Learner", "Status", "Amount", "Action"]
+                : ["آخر تحديث", "الحجز / المتدرب", "الحالة", "المبلغ", "الإجراء"]
               ).map((h, i) => (
                 <th key={i}>{h}</th>
               ))}
@@ -572,6 +441,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                       <td>
                         <strong>{String(en ? row.titleEn : row.titleAr)}</strong>
                         <span className="cohort-code-badge">{String(row.cohortCode)}</span>
+                        {row.hasDraft === true && <small>{en ? "Unpublished changes" : "تعديلات غير منشورة"}</small>}
                       </td>
                       <td>
                         <strong style={{ color: "var(--sea-primary)" }}>{Number(row.priceMinor) / 100} SAR</strong>
@@ -588,7 +458,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                         </span>
                       </td>
                       <td>
-                        <button className="btn-export" onClick={() => edit(row)}>
+                        <button className="btn-export" disabled={busy} onClick={() => void edit(row)}>
                           {en ? "Edit" : "تعديل"}
                         </button>
                       </td>
@@ -611,7 +481,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                           </td>
                           <td>
                             <strong>
-                              {cohort ? String(en ? cohort.titleEn || cohort.titleAr : cohort.titleAr || cohort.titleEn) : String(row.cohortId)}
+                              {cohort ? String(en ? cohort.titleEn || cohort.titleAr : cohort.titleAr || cohort.titleEn) : en ? "Cohort unavailable" : "الدفعة غير متاحة"}
                             </strong>
                             {cohort?.cohortCode ? <small className="cohort-code-badge">{String(cohort.cohortCode)}</small> : null}
                           </td>
@@ -639,9 +509,9 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                   ) : (
                     <>
                       <td>
-                        <strong className="receipt-number-badge" style={{ fontSize: "12px" }}>{row.id}</strong>
+                        <time>{Number.isFinite(Number(row.updatedAt)) ? new Intl.DateTimeFormat(en ? "en" : "ar", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Riyadh" }).format(Number(row.updatedAt)) : "—"}</time>
                       </td>
-                      <td>{String(row.bookingId)}</td>
+                      <td><strong>{String(row.bookingNumber || (en ? "Booking unavailable" : "الحجز غير متاح"))}</strong><small>{String(row.learnerName || "")}</small></td>
                       <td>
                         <span className={`status-badge status-badge--${String(row.status || "").toLowerCase().replace("_", "-")}`}>
                           {String(row.status)}
@@ -703,6 +573,7 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
             </button>
           </div>
 
+          <div className="editor-language-tabs" role="group" aria-label={en ? "Editing language" : "لغة التحرير"}>{(["ar", "en"] as const).map(lang => <button type="button" key={lang} aria-pressed={editLocale === lang} className={editLocale === lang ? "is-active" : ""} onClick={() => setEditLocale(lang)}>{lang === "ar" ? "العربية" : "English"}</button>)}</div>
           <div className="training-input-grid">
             <label>
               {en ? "Program" : "البرنامج الأكاديمي"}
@@ -732,14 +603,14 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
               </select>
             </label>
             {textInput("cohortCode", en ? "Cohort Code (e.g. CRD-01)" : "رمز الدفعة (مثال: CRD-01)")}
-            {textInput("titleAr", "اسم الدفعة بالعربية")}
-            {textInput("titleEn", "Cohort title in English")}
+            {editLocale === "ar" && textInput("titleAr", "اسم الدفعة بالعربية")}
+            {editLocale === "en" && textInput("titleEn", "Cohort title in English")}
             {textInput("price", en ? "Fee in SAR (e.g. 1)" : "الرسوم بالريال السعودي", "number")}
             {textInput("capacity", en ? "Capacity (e.g. 25)" : "السعة القصوى للمقاعد", "number")}
             {textInput("start", en ? "Starts (Riyadh Time)" : "البداية بتوقيت الرياض", "datetime-local")}
             {textInput("end", en ? "Ends (Riyadh Time)" : "النهاية بتوقيت الرياض", "datetime-local")}
-            {textInput("scheduleAr", "الجدول بالعربية (مثال: الأحد إلى الخميس 9-3)")}
-            {textInput("scheduleEn", "Schedule in English")}
+            {editLocale === "ar" && textInput("scheduleAr", "الجدول بالعربية")}
+            {editLocale === "en" && textInput("scheduleEn", "Schedule in English")}
             <label>
               {en ? "Delivery Mode" : "نمط التدريب"}
               <select value={form.locationType} onChange={(e) => setForm((v) => ({ ...v, locationType: e.target.value }))}>
@@ -747,17 +618,13 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
                 <option value="remote">{en ? "Online (عن بُعد)" : "عن بُعد (عبر الإنترنت)"}</option>
               </select>
             </label>
-            <label>
-              {en ? "Publication Status" : "حالة النشر"}
-              <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}>
-                <option value="draft">{en ? "Draft (مسودة)" : "مسودة"}</option>
-                <option value="published">{en ? "Published (منشور للجمهور)" : "منشور (للجمهور)"}</option>
-              </select>
-            </label>
-            {textInput("venueAr", "المقر بالعربية (مثال: فرع الربوة - الرياض)")}
-            {textInput("venueEn", "Location in English")}
+
+            {editLocale === "ar" && textInput("venueAr", "الموقع بالعربية")}
+            {editLocale === "en" && textInput("venueEn", "Location in English")}
           </div>
 
+          <ContentAssistant key={(form.id || "new") + editLocale} collection="cohorts" value={form} baseline={savedForm} locale={editLocale} english={en} available={aiAvailable} metadata={translationState} onReview={() => {}} onChange={next => setForm(next as unknown as typeof empty)} request={request} />
+          {cohortReview && <section className="publish-review"><h3>{en ? "Review cohort details" : "مراجعة بيانات الدفعة"}</h3><div className="publish-language-preview"><div dir="rtl"><strong>{form.titleAr}</strong><p>{form.scheduleAr}</p><p>{form.venueAr}</p></div><div dir="ltr"><strong>{form.titleEn}</strong><p>{form.scheduleEn}</p><p>{form.venueEn}</p></div></div><p>{form.price} SAR · {form.capacity} {en ? "seats" : "مقاعد"}</p><p dir="ltr">{form.start} — {form.end} (Asia/Riyadh)</p><label className="publish-confirm"><input type="checkbox" checked={cohortReviewed} onChange={e => setCohortReviewed(e.target.checked)} />{en ? "I confirmed both languages, fee, dates, venue and capacity." : "راجعت اللغتين والرسوم والمواعيد والموقع والسعة."}</label><button type="button" className="button button--primary" disabled={busy || !cohortReviewed} onClick={e => void save(e, true)}>{en ? "Publish reviewed cohort" : "نشر الدفعة المراجعة"}</button></section>}
           <label className="training-consent" style={{ marginTop: "12px" }}>
             <input type="checkbox" checked={form.registrationOpen} onChange={(e) => setForm((v) => ({ ...v, registrationOpen: e.target.checked }))} />
             <span>{en ? "Allow online registration (Open for booking)" : "تفعيل وإتاحة الحجز الإلكتروني فوراً (فتح التسجيل)"}</span>
@@ -765,9 +632,10 @@ export function TrainingAdmin({ user, english: en }: { user: User; english: bool
 
           <div className="button-row">
             <button className="button button--primary" disabled={busy}>
-              {en ? "Save Cohort" : "حفظ الدفعة"}
+              {en ? "Save draft" : "حفظ مسودة"}
             </button>
-            <button type="button" className="btn-export" onClick={() => setForm(empty)}>
+            <button type="button" className="btn-export" onClick={() => setCohortReview(v => !v)}>{en ? "Preview / Review & publish" : "معاينة / مراجعة ونشر"}</button>
+            <button type="button" className="btn-export" onClick={() => { if (JSON.stringify(form) === JSON.stringify(savedForm) || window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) { setForm(empty); setSavedForm(empty); setCohortReview(false); } }}>
               {en ? "Clear" : "إلغاء"}
             </button>
           </div>

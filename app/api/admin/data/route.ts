@@ -5,6 +5,7 @@ import { authErrorResponse, canManageCollection, requireAdmin } from "@/lib/fire
 import { validateCmsRecord } from "@/lib/cms-validation";
 import { FieldValue } from "firebase-admin/firestore";
 import type { NextRequest } from "next/server";
+import { aiCollections, buildTranslationState, type ContentRecord, type TranslationState } from "@/lib/admin/content";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ const managedCollections = new Set([
 const payloadSchema = z.object({
   id: z.string().regex(/^[A-Za-z0-9_-]{1,180}$/).optional(),
   data: z.record(z.string(), z.unknown()),
+  createOnly: z.boolean().optional(),
+  translationReview: z.object({ reviewed: z.array(z.string().max(170)).max(800), aiPaths: z.array(z.string().max(170)).max(800).optional() }).optional(),
 });
 const submissionCollections = new Set(["applications", "employer_inquiries", "contact_inquiries"]);
 
@@ -41,6 +44,12 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Collection unavailable" }, { status: 403 });
     }
     const reference = getAdminDb().collection(collection);
+    const recordId = request.nextUrl.searchParams.get("id");
+    if (recordId && !/^[A-Za-z0-9_-]{1,180}$/.test(recordId)) return Response.json({ error: "Invalid record" }, { status: 400 });
+    if (recordId) {
+      const [record, draft, translation] = await Promise.all([reference.doc(recordId).get(), getAdminDb().collection("content_drafts").doc(collection + "__" + recordId).get(), getAdminDb().collection("content_translation_state").doc(collection + "__" + recordId).get()]);
+      return Response.json({ items: record.exists ? [{ ...serialize(draft.exists ? draft.data()?.data : record.data()) as object, id: recordId, hasDraft: draft.exists }] : [], translationState: translation.data()?.fields || {} }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     const snapshot = ["applications", "employer_inquiries", "contact_inquiries"].includes(collection)
       ? await reference.orderBy("createdAt", "desc").limit(100).get()
       : collection === "audit_logs" ? await reference.orderBy("at", "desc").limit(100).get() : await reference.limit(100).get();
@@ -76,11 +85,20 @@ export async function POST(request: NextRequest) {
     }
     await db.runTransaction(async (tx) => {
       const current = await tx.get(reference);
+      if (body.createOnly && current.exists) throw Object.assign(new Error("This address or item already exists. Choose another address or edit the existing item."), { conflict: true });
+      if (collection === "pages" && current.exists && current.data()?.path && values.path !== current.data()?.path) throw new z.ZodError([{ code: "custom", path: ["path"], message: "Existing page addresses are preserved. Create a separate page for a new address." }]);
       const draftRef = db.collection("content_drafts").doc(collection + "__" + reference.id);
+      const translationRef = db.collection("content_translation_state").doc(collection + "__" + reference.id);
+      const [priorDraft, translation] = await Promise.all([tx.get(draftRef), tx.get(translationRef)]);
+      const translationState = aiCollections.has(collection) ? buildTranslationState(collection, values as ContentRecord, (priorDraft.exists ? priorDraft.data()?.data : current.data()) as ContentRecord | undefined, (translation.data()?.fields || {}) as TranslationState, body.translationReview?.reviewed, body.translationReview?.aiPaths) : {};
+      if (aiCollections.has(collection) && values.status === "published" && Object.values(translationState).some(field => field.status !== "reviewed")) {
+        throw new z.ZodError([{ code: "custom", path: ["locales"], message: "Review both languages before publishing. You can save a draft or edit translations manually." }]);
+      }
       const metadata = { createdAt: current.data()?.createdAt ?? FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(), updatedBy: identity.uid };
       if (!submissionCollections.has(collection) && current.exists) {
-        tx.create(db.collection("content_versions").doc(), { collection, recordId: reference.id, data: current.data(), actorUid: identity.uid, at: FieldValue.serverTimestamp() });
+        tx.create(db.collection("content_versions").doc(), { collection, recordId: reference.id, data: priorDraft.exists ? priorDraft.data()?.data : current.data(), translationState: translation.data()?.fields || {}, actorUid: identity.uid, at: FieldValue.serverTimestamp() });
       }
+      if (aiCollections.has(collection)) tx.set(translationRef, { fields: translationState, updatedBy: identity.uid, updatedAt: FieldValue.serverTimestamp() });
       if (!submissionCollections.has(collection) && current.data()?.status === "published" && values.status === "draft") {
         tx.set(draftRef, { data: { ...current.data(), ...values, ...metadata }, collection, recordId: reference.id });
       } else {
@@ -92,6 +110,7 @@ export async function POST(request: NextRequest) {
     refreshSite(collection);
     return Response.json({ id: reference.id, ok: true });
   } catch (error) {
+    if (error instanceof Error && "conflict" in error) return Response.json({ error: error.message }, { status: 409 });
     if (error instanceof z.ZodError) return Response.json({ error: "Invalid record", details: error.issues.map(({ path, message }) => ({ path, message })) }, { status: 400 });
     return authErrorResponse(error);
   }

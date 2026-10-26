@@ -48,7 +48,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="site-header__actions">
-          {navText.apply && <Link className="button button--primary button--small header-cta" href="/apply">
+          {navText.apply && <Link className="button button--light button--secondary-outline button--small header-cta" href="/apply">
             {navText.apply} {english ? <ArrowUpRight size={15} aria-hidden="true" /> : <ArrowUpLeft size={15} aria-hidden="true" />}
           </Link>}
           <button className="language-toggle" type="button" onClick={switchLocale} aria-label={t("switchLanguage")} title={t("switchLanguage")}>

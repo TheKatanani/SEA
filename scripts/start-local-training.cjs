@@ -2,6 +2,10 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 const { localTrainingEnv, PROJECT_ID, ORIGIN } = require('./local-training-env.cjs');
 const env = localTrainingEnv();
+if (process.argv.includes('--ai')) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('Add GEMINI_API_KEY locally before enabling live synthetic AI checks.');
+  env.GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+}
 const production = process.argv.includes('--production');
 if (production) env.NODE_ENV = 'production';
 console.log('Local test app: ' + ORIGIN + ' | Firebase emulator project: ' + PROJECT_ID + ' | Moyasar: test mode only');

@@ -27,7 +27,7 @@ function cohort(id, capacity = 1) {
 function reserve(cohortId, requestKey = randomUUID(), ip = '192.0.2.1', extra = {}) {
   return request('/api/bookings', { method: 'POST', ip, data: { cohortId, requestKey, attendee, locale: 'en', privacyConsent: true, ...extra } });
 }
-async function save(value, token = ownerToken) { return request('/api/admin/training', { method: 'POST', token, data: value }); }
+async function save(value, token = ownerToken) { return request('/api/admin/training', { method: 'POST', token, data: { ...value, translationReview: { reviewed: value.status === 'published' ? ['ar:title', 'en:title', 'ar:schedule', 'en:schedule', 'ar:venue', 'en:venue'] : [] } } }); }
 async function signIn(email) {
   const response = await fetch('http://127.0.0.1:19099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=local-demo-api-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: 'Local-test-only-2026!', returnSecureToken: true }) });
   assert.equal(response.status, 200, 'Emulator sign in failed'); return (await response.json()).idToken;

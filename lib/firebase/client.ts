@@ -1,8 +1,8 @@
 "use client";
 
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -24,12 +24,18 @@ function getFirebaseApp() {
 }
 
 export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+  const auth = getAuth(getFirebaseApp());
+  if (useLocalEmulators() && !localAuth.has(auth)) { connectAuthEmulator(auth, "http://127.0.0.1:19099", { disableWarnings: true }); localAuth.add(auth); }
+  return auth;
 }
 
 export function getFirebaseDb() {
-  return getFirestore(getFirebaseApp());
+  const db = getFirestore(getFirebaseApp());
+  if (useLocalEmulators() && !localDb.has(db)) { connectFirestoreEmulator(db, "127.0.0.1", 18080); localDb.add(db); }
+  return db;
 }
+const localAuth = new WeakSet(), localDb = new WeakSet();
+function useLocalEmulators() { return process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true" && firebaseConfig.projectId?.startsWith("demo-") && typeof window !== "undefined" && ["127.0.0.1", "localhost"].includes(window.location.hostname); }
 
 // Analytics should only be initialized after the visitor has accepted analytics cookies.
 export async function enableFirebaseAnalyticsAfterConsent() {

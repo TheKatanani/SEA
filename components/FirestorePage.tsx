@@ -10,6 +10,8 @@ import { ProgramCard } from "@/components/ProgramCard";
 import { CohortOptions } from "@/components/CohortOptions";
 import { ArrowUpLeft, ArrowUpRight, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
+import { cleanSections, usefulPublicRecord, uniqueCopy } from "@/lib/public-layout";
+
 type Section = { type?: string; collection?: string; recordId?: string; formType?: string; heading?: string; body?: string; imageUrl?: string; imageAlt?: string; buttonLabel?: string; buttonUrl?: string };
 
 const collections = new Set<PublicContentCollection>(["programs", "courses", "news", "calendar", "gallery", "faqs", "partners", "policies", "support", "admissions", "resources"]);
@@ -31,7 +33,7 @@ const routeContent: Record<string, { collections?: PublicContentCollection[]; fo
   "/policies": { collections: ["policies"] },
   "/support": { collections: ["support", "resources"] },
   "/contact": { form: "contact_inquiry" },
-  "/news": { collections: ["resources"] },
+  "/news": { collections: ["news"] },
   "/academic-calendar": { collections: ["calendar"] },
   "/faq": { collections: ["faqs"] },
   "/careers": { form: "contact_inquiry" },
@@ -48,7 +50,7 @@ function safeHref(value: unknown) {
 function CmsCard({ record, locale, collection }: { record: PublicContentRecord; locale: "ar" | "en"; collection: string }) {
   const text = localizedFields(record, locale);
   const title = String(text.title || record.title || record.name || "");
-  const description = String(text.description || text.summary || text.role || text.caption || record.description || "");
+  const description = String(text.description || text.summary || text.role || text.caption || (collection === "news" ? text.body : "") || record.description || "");
   const image = safeHref(record.imageUrl || record.logoUrl || (record.resourceType === "image" ? record.url : undefined));
   const partner = collection === "partners";
   const href = safeHref(record.href || record.documentUrl || record.url || (record.type === "diploma" ? `/programs/${record.slug || record.id}` : undefined));
@@ -59,23 +61,20 @@ function CmsCard({ record, locale, collection }: { record: PublicContentRecord; 
 
 function CmsCollection({ collection, items, locale }: { collection: string; items: PublicContentRecord[]; locale: "ar" | "en" }) {
   const english = locale === "en";
-  if (!items.length) return <div className="cms-collection-state">{english ? "No published content is available yet." : "لا يوجد محتوى منشور حاليًا."}</div>;
+  items = items.filter(item => usefulPublicRecord(collection, item, locale));
+  if (!items.length) return null;
   if (collection === "faqs") return <div className="cms-faq-list">{items.map((item) => { const text = localizedFields(item, locale); return <details key={item.id} className="cms-faq"><summary>{String(text.question || text.title || "")}</summary><p>{String(text.answer || text.body || "")}</p></details>; })}</div>;
   if (collection === "admissions") return <div className="cms-admission-list">{items.map((item) => { const text = localizedFields(item, locale); const requirements = Array.isArray(text.requirements) ? text.requirements : []; const docs = Array.isArray(text.documents) ? text.documents : []; return <article className="content-panel" key={item.id}><h3>{String(text.title || (english ? "Admission requirements" : "متطلبات القبول"))}</h3>{requirements.length > 0 && <ul>{requirements.map((value, index) => <li key={`r-${index}`}>{String(value)}</li>)}</ul>}{docs.length > 0 && <><h4>{english ? "Required documents" : "الوثائق المطلوبة"}</h4><ul>{docs.map((value, index) => <li key={`d-${index}`}>{String(value)}</li>)}</ul></>}</article>; })}</div>;
   if (collection === "programs" || collection === "courses") return <div className="program-grid">{items.map((record, index) => <ProgramCard key={record.id} program={toProgram(record, collection)} index={index} />)}</div>;
-  const usefulItems = items.filter((item) => {
-    const text = localizedFields(item, locale);
-    const sectionBody = Array.isArray(text.sections) && text.sections.some((section) => section && typeof section === "object" && typeof (section as Record<string, unknown>).body === "string" && String((section as Record<string, unknown>).body).trim());
-    return Boolean(text.title || text.question || item.title || item.name) && Boolean(text.description || text.summary || text.role || item.imageUrl || item.logoUrl || item.url || item.documentUrl || item.href || sectionBody);
-  });
-  if (!usefulItems.length) return <div className="cms-collection-state">{english ? "More information will be published here." : "ستُنشر معلومات إضافية هنا."}</div>;
+  const usefulItems = items;
+  if (!usefulItems.length) return null;
   return <div className={`cms-collection-grid cms-collection-grid--${collection}`}>{usefulItems.slice(0, 36).map((record) => <CmsCard record={record} locale={locale} collection={collection} key={record.id} />)}</div>;
 }
 
-function SingleCmsRecord({ record, locale }: { record: PublicContentRecord; locale: "ar" | "en" }) {
+function SingleCmsRecord({ record, locale, omitText = "" }: { record: PublicContentRecord; locale: "ar" | "en"; omitText?: string }) {
   const text = localizedFields(record, locale);
   const image = safeHref(record.imageUrl || record.image);
-  const sections = Array.isArray(text.sections) ? text.sections as Array<Record<string, unknown>> : [];
+  const sections = cleanSections(Array.isArray(text.sections) ? text.sections as Section[] : [], text.title, text.description || text.summary);
   const requirements = Array.isArray(text.requirements) ? text.requirements : [];
   const documents = Array.isArray(text.documents) ? text.documents : [];
   const careers = typeof text.careers === "string" ? text.careers : "";
@@ -87,10 +86,7 @@ function SingleCmsRecord({ record, locale }: { record: PublicContentRecord; loca
   const documentUrl = safeHref(record.documentUrl || record.url);
   return <div className="cms-record-content">
     {image && <img className="cms-page__image" src={image} alt={String(text.imageAlt || text.title || "")} loading="lazy" />}
-    {summary && <p>{summary}</p>}
-    {role && <p>{role}</p>}
-    {body && <p>{body}</p>}
-    {typeof text.description === "string" && <p>{text.description}</p>}
+    {uniqueCopy([summary, role, body, text.description], [omitText]).map((copy, i) => <p key={i} style={{ whiteSpace: "pre-wrap" }}>{copy}</p>)}
     {typeof text.targetAudience === "string" && <section><h3>{locale === "en" ? "Who is this program for?" : "الفئة المستهدفة"}</h3><p>{text.targetAudience}</p></section>}
     {pillars.length > 0 && <section><h3>{locale === "en" ? "Training areas" : "المحاور التدريبية"}</h3><ul>{pillars.map((value, index) => <li key={index}>{String(value)}</li>)}</ul></section>}
     {outcomes && <section><h3>{locale === "en" ? "Learning outcomes" : "مخرجات التعلم"}</h3><p>{outcomes}</p></section>}
@@ -112,7 +108,7 @@ function hasRenderableSections(sections: Section[]) {
 }
 
 function SectionBlock({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
-  return <RevealSection className={`section-pad cms-page__section ${className}`}><div className="page-shell"><div className="cms-page__copy"><h2>{title}</h2>{children}</div></div></RevealSection>;
+  return <RevealSection className={`section-pad cms-page__section ${className}`}><div className="page-shell"><div className="cms-page__copy">{title && <h2>{title}</h2>}{children}</div></div></RevealSection>;
 }
 
 function ContactDetails({ record, locale }: { record: PublicContentRecord | null; locale: "ar" | "en" }) {
@@ -165,7 +161,7 @@ function HomeHero({ locale, title, description, items }: { locale: "ar" | "en"; 
   </RevealSection>;
 }
 
-function RouteContent({ path, locale, page, plan, data, brand }: { path: string; locale: "ar" | "en"; page: PublicContentRecord | null; plan: (typeof routeContent)[string] | null; data: Map<string, PublicContentRecord[]>; brand: PublicContentRecord | null }) {
+function RouteContent({ path, locale, page, plan, data, brand, omitText = "" }: { path: string; locale: "ar" | "en"; page: PublicContentRecord | null; plan: (typeof routeContent)[string] | null; data: Map<string, PublicContentRecord[]>; brand: PublicContentRecord | null; omitText?: string }) {
   const english = locale === "en";
   const headings: Record<string, string> = {
     programs: english ? "Explore our programs" : "اكتشف البرامج التدريبية",
@@ -174,6 +170,7 @@ function RouteContent({ path, locale, page, plan, data, brand }: { path: string;
     admissions: english ? "Admission requirements" : "شروط القبول",
     policies: english ? "Policies and regulations" : "السياسات واللوائح",
     support: english ? "Support resources" : "موارد الدعم",
+    news: english ? "Latest news" : "آخر الأخبار",
     resources: english ? "Guides and documents" : "الأدلة والوثائق",
     calendar: english ? "Academic calendar" : "التقويم الأكاديمي",
     faqs: english ? "Frequently asked questions" : "الأسئلة الشائعة",
@@ -184,50 +181,37 @@ function RouteContent({ path, locale, page, plan, data, brand }: { path: string;
   const title = String((detail && localizedFields(detail, locale).title) || (page && (localizedFields(page, locale).title || page.title)) || "");
 
   if (path === "/" && plan) return <>
-    <SectionBlock title={headings.programs}><CmsCollection collection="programs" items={(data.get("programs") || []).slice(0, 3)} locale={locale} /><div className="cms-section-link"><Link className="text-link" href="/programs">{english ? "View all programs" : "عرض جميع البرامج"} <ArrowUpRight size={15} /></Link></div></SectionBlock>
-    <SectionBlock title={headings.partners}><CmsCollection collection="partners" items={data.get("partners") || []} locale={locale} /></SectionBlock>
-    <SectionBlock title={english ? "Register your interest" : "سجّل اهتمامك"} className="cms-form-section"><ManagedForm formType="quick_interest" /></SectionBlock>
+    {(data.get("programs") || []).length > 0 && <SectionBlock title={headings.programs}><CmsCollection collection="programs" items={(data.get("programs") || []).slice(0, 3)} locale={locale} /><div className="cms-section-link"><Link className="text-link" href="/programs">{english ? "View all programs" : "عرض جميع البرامج"} <ArrowUpRight size={15} /></Link></div></SectionBlock>}
+    {(data.get("partners") || []).some(v => usefulPublicRecord("partners", v, locale)) && <SectionBlock title={headings.partners}><CmsCollection collection="partners" items={data.get("partners") || []} locale={locale} /></SectionBlock>}
+    <SectionBlock title="" className="cms-form-section"><ManagedForm formType="quick_interest" /></SectionBlock>
   </>;
 
   if (detail && detailCollection) return <>
-    <SectionBlock title={title || headings[detailCollection] || (english ? "Details" : "التفاصيل")} className="cms-detail-section"><SingleCmsRecord record={detail} locale={locale} />
-      {["programs", "courses"].includes(detailCollection) && <ActionLinks locale={locale} paths={[{ href: `#cohorts-${detail.id}`, label: english ? "Book your seat now" : "احجز مقعدك الآن (تأكيد فوري)", primary: true }, { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false }]} />}
+    <SectionBlock title={["programs", "courses"].includes(detailCollection) ? english ? "Program details" : "تفاصيل البرنامج" : ""} className="cms-detail-section"><SingleCmsRecord record={detail} locale={locale} omitText={omitText} />
+
       {detailCollection === "partners" && <ActionLinks locale={locale} paths={[{ href: "/partners", label: english ? "All partners" : "جميع الشركاء" }]} />}
     </SectionBlock>
-    {plan?.form && (
-      <div id="interest-form" className="training-interest-container">
-        <div className="training-interest-callout">
-          <div className="training-interest-callout__badge">{english ? "Secondary Option" : "مسار اختياري"}</div>
-          <h3>{english ? "Have questions or need employer approval?" : "هل لديك استفسار أو تحتاج خطاباً لجهة عملك؟"}</h3>
-          <p>
-            {english
-              ? "This form submits an inquiry or interest application only. To guarantee an immediate seat in the current cohort, please choose an available cohort from the booking section above."
-              : "هذا النموذج مخصص للاستفسار أو طلبات جهات العمل والشركات، ولا يقوم بحجز مقعد مؤكد في الدفعة الحالية. لحجز مقعدك فوراً والدفع الإلكتروني المباشر، يرجى اختيار إحدى الدفعات أعلاه."}
-          </p>
-        </div>
-        <SectionBlock title={english ? "Inquiries & Future Cohorts" : "تسجيل الاهتمام والاستفسار"} className="cms-form-section">
-          <ManagedForm formType={plan.form} />
-        </SectionBlock>
-      </div>
-    )}
+    {plan?.form && <details id="interest-form" className="training-interest-container page-shell"><summary>{english ? "Questions or future cohorts? Register interest" : "استفسار أو اهتمام بدفعات قادمة؟"}</summary><p>{english ? "This form registers interest only. Choose a cohort above to reserve and pay for a seat." : "هذا النموذج لتسجيل الاهتمام فقط. اختر دفعة أعلاه لحجز مقعد والدفع."}</p><ManagedForm formType={plan.form} /></details>}
   </>;
 
   if (path === "/contact") return <>
     <SectionBlock title={english ? "Contact details" : "معلومات التواصل"}><ContactDetails record={brand} locale={locale} /></SectionBlock>
     <SectionBlock title={english ? "Send a message" : "أرسل رسالة"} className="cms-form-section"><ManagedForm formType="contact_inquiry" /></SectionBlock>
   </>;
-  if (path === "/gallery") return <SectionBlock title={headings.gallery}><GalleryGrid /></SectionBlock>;
+  if (path === "/gallery") return <SectionBlock title="">{(data.get("gallery") || []).some(v => usefulPublicRecord("gallery", v, locale)) ? <GalleryGrid /> : <p>{english ? "New photos and videos will be available soon." : "ستتوفر صور وفيديوهات جديدة قريباً."}</p>}</SectionBlock>;
   if (path === "/careers") return <SectionBlock title={english ? "Career enquiries" : "استفسارات التوظيف"} className="cms-form-section"><ManagedForm formType="contact_inquiry" /></SectionBlock>;
 
+  if (plan?.collections?.length && !plan.form && !plan.collections.some(c => (data.get(c) || []).some(v => usefulPublicRecord(c, v, locale)))) return <SectionBlock title=""><p>{english ? "Updates will be available soon." : "ستتوفر المستجدات قريباً."}</p><Link className="text-link" href="/contact">{english ? "Contact the Academy" : "تواصل مع الأكاديمية"}</Link></SectionBlock>;
   if (plan?.collections?.length || plan?.form) return <>
     {plan.collections?.map((collection) => {
-      const records = data.get(collection) || [];
+      const records = (data.get(collection) || []).filter(item => usefulPublicRecord(collection, item, locale));
+      if (!records.length) return null;
       const programOrCourse = collection === "programs" || collection === "courses";
       const limit = path === "/about" || path === "/admission" || path === "/student-journey" ? 3 : 36;
       const content = collection === "gallery" ? <GalleryGrid /> : <CmsCollection collection={collection} items={records.slice(0, programOrCourse ? limit : 36)} locale={locale} />;
       return <SectionBlock key={collection} title={headings[collection] || (english ? "Information" : "المعلومات")}>{content}</SectionBlock>;
     })}
-    {plan.form && <SectionBlock title={english ? "Register your interest" : "سجّل اهتمامك"} className="cms-form-section"><ManagedForm formType={plan.form} /></SectionBlock>}
+    {plan.form && <SectionBlock title="" className="cms-form-section"><ManagedForm formType={plan.form} /></SectionBlock>}
   </>;
 
   return <SectionBlock title={title || (english ? "Information" : "المعلومات")}><p className="cms-collection-state">{english ? "More information will be published here." : "ستُنشر معلومات إضافية هنا."}</p></SectionBlock>;
@@ -238,7 +222,7 @@ function PageSection({ section, locale }: { section: Section; locale: "ar" | "en
   const buttonUrl = safeHref(section.buttonUrl);
   return <RevealSection className={`section-pad cms-page__section cms-page__section--${section.type || "text"}`}>
     <div className="page-shell"><div className="cms-page__copy">
-      {section.heading && <h2>{section.heading}</h2>}
+      {section.type !== "form" && section.heading && <h2>{section.heading}</h2>}
       {section.type === "collection" && collection ? <CmsCollection collection={collection} items={[]} locale={locale} /> : null}
       {section.type === "record" && collection ? <div className="cms-collection-state">{locale === "en" ? "Content is unavailable." : "المحتوى غير متاح."}</div> : null}
       {section.type === "form" && formTypes.has(String(section.formType)) ? <ManagedForm formType={section.formType as "quick_interest" | "application_interest" | "employer_inquiry" | "future_diploma_interest" | "contact_inquiry"} /> : null}
@@ -265,7 +249,7 @@ export async function FirestorePage({ path }: { path: string }) {
     ...(detailPlan?.featuredRecord ? [detailPlan.featuredRecord.collection] : []),
   ]);
   const translation = result.state === "published" && result.page ? (result.page.locales as Record<string, Record<string, unknown>> | undefined)?.[locale] : undefined;
-  const rawSections = Array.isArray(translation?.sections) ? translation.sections.slice(0, 30) as Section[] : [];
+  const rawSections = cleanSections(Array.isArray(translation?.sections) ? translation.sections.slice(0, 30) as Section[] : [], translation?.title, translation?.description).map(section => path === "/news" && section.collection === "resources" ? { ...section, collection: "news" } : section);
   for (const section of rawSections) if (section.collection && collections.has(section.collection as PublicContentCollection)) collectionsNeeded.add(section.collection as PublicContentCollection);
   const sections = hasRenderableSections(rawSections) ? rawSections : [];
   if (sections.length) {
@@ -281,8 +265,8 @@ export async function FirestorePage({ path }: { path: string }) {
       const isTraining = detailPlan.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection);
       const detailHeroLinks = isTraining
         ? [
-            { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat (Instant confirmation)" : "احجز مقعدك الآن (تثبيت ودفع فوري)", primary: true },
-            { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false },
+            { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat" : "احجز مقعدك", primary: true },
+            { href: "#interest-form", label: english ? "Register interest" : "سجّل اهتمامك", primary: false },
           ]
         : [];
       return <article className="cms-page"><RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />Saudi Entertainment Academy</p><h1>{String(localizedFields(detailRecord, locale).title || detailRecord.title || detailRecord.name || "")}</h1>{detailHeroLinks.length > 0 && <ActionLinks locale={locale} paths={detailHeroLinks} />}</div></RevealSection>{bookingOptions}<RouteContent path={path} locale={locale} page={null} plan={detailPlan} data={records} brand={null} /></article>;
@@ -292,30 +276,31 @@ export async function FirestorePage({ path }: { path: string }) {
   }
   if (!translation || typeof translation.title !== "string") return <div className="cms-state page-shell"><h1>{english ? "This page is not available in this language" : "هذه الصفحة غير متاحة بهذه اللغة"}</h1></div>;
   const publishedSections = sections.map((section, index) => {
-    const recordsForCollection = section.collection ? records.get(section.collection) || [] : [];
+    if (section.type === "form" && !formTypes.has(String(section.formType))) return null;
+    const recordsForCollection = section.collection ? (records.get(section.collection) || []).filter(item => usefulPublicRecord(section.collection!, item, locale)) : [];
+    if (section.type === "collection" && !recordsForCollection.length) return null;
     if (section.type === "collection") return <RevealSection className="section-pad cms-page__section cms-page__section--collection" key={index}><div className="page-shell"><div className="cms-page__copy">{section.heading && <h2>{section.heading}</h2>}{section.collection === "gallery" ? <GalleryGrid /> : <CmsCollection collection={section.collection || ""} items={recordsForCollection} locale={locale} />}</div></div></RevealSection>;
     if (section.type === "record") {
       const record = recordsForCollection.find((item) => item.id === section.recordId);
+      if (!record) return null;
       return <RevealSection className="section-pad cms-page__section cms-page__section--record" key={index}><div className="page-shell"><div className="cms-page__copy">{section.heading && <h2>{section.heading}</h2>}{record ? <SingleCmsRecord record={record} locale={locale} /> : <div className="cms-collection-state">{english ? "This content is not published yet." : "هذا المحتوى غير منشور حاليًا."}</div>}</div></div></RevealSection>;
     }
-    return <PageSection section={section} locale={locale} key={index} />;
-  });
+    return <div key={index} id={detailRecord && section.type === "form" && section.formType === detailPlan?.form ? "interest-form" : undefined}><PageSection section={section} locale={locale} /></div>;
+  }).filter(Boolean);
   const configuredForms = new Set(sections.filter((section) => section.type === "form" && section.formType).map((section) => section.formType));
   const effectivePlan = plan || detailPlan;
   const requiredFormFallback = publishedSections.length && effectivePlan?.form && !configuredForms.has(effectivePlan.form)
-    ? <SectionBlock title={english ? "Register your interest" : "سجّل اهتمامك"} className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock>
+    ? <div id={detailRecord ? "interest-form" : undefined}><SectionBlock title="" className="cms-form-section"><ManagedForm formType={effectivePlan.form} /></SectionBlock></div>
     : null;
   const brand = path === "/contact" ? await getPublishedBrandRecord() : null;
   const isProgramDetail = Boolean(detailRecord && detailPlan?.featuredRecord && ["programs", "courses"].includes(detailPlan.featuredRecord.collection));
   const heroLinks = isProgramDetail && detailRecord
     ? [
-        { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat (Instant confirmation)" : "احجز مقعدك الآن (تثبيت ودفع فوري)", primary: true },
-        { href: "#interest-form", label: english ? "Inquiries & Sponsorship" : "استفسار أو رعاية جهة عمل", primary: false },
+        { href: `#cohorts-${detailRecord.id}`, label: english ? "Book your seat" : "احجز مقعدك", primary: true },
+        { href: "#interest-form", label: english ? "Register interest" : "سجّل اهتمامك", primary: false },
       ]
-    : path === "/programs"
-    ? [{ href: "/apply", label: english ? "Register interest" : "سجّل اهتمامك" }]
     : [];
-  return <article className="cms-page">{path === "/" ? <HomeHero locale={locale} title={translation.title} description={typeof translation.description === "string" ? translation.description : ""} items={records.get("gallery") || []} /> : <RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />{english ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</p><h1>{translation.title}</h1>{typeof translation.description === "string" && translation.description && <p>{translation.description}</p>}{heroLinks.length > 0 && <ActionLinks locale={locale} paths={heroLinks} />}</div></RevealSection>}{bookingOptions}{publishedSections.length ? <>{publishedSections}{requiredFormFallback}</> : <RouteContent path={path} locale={locale} page={result.page as PublicContentRecord} plan={effectivePlan} data={records} brand={brand} />}</article>;
+  return <article className="cms-page">{path === "/" ? <HomeHero locale={locale} title={translation.title} description={typeof translation.description === "string" ? translation.description : ""} items={records.get("gallery") || []} /> : <RevealSection className="cms-page__hero"><div className="page-shell"><p className="eyebrow"><span className="eyebrow__dot" />{english ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</p><h1>{translation.title}</h1>{typeof translation.description === "string" && translation.description && <p>{translation.description}</p>}{heroLinks.length > 0 && <ActionLinks locale={locale} paths={heroLinks} />}</div></RevealSection>}{bookingOptions}{publishedSections.length ? <>{publishedSections}{requiredFormFallback}</> : <RouteContent path={path} locale={locale} page={result.page as PublicContentRecord} plan={effectivePlan} data={records} brand={brand} omitText={typeof translation.description === "string" ? translation.description : ""} />}</article>;
 }
 
 export async function getFirestorePageMetadata(path: string, locale: "ar" | "en") {

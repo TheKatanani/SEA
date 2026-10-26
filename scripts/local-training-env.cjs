@@ -25,6 +25,7 @@ function localTrainingEnv() {
     NEXT_PUBLIC_FIREBASE_API_KEY: 'local-demo-api-key',
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'localhost',
     NEXT_PUBLIC_FIREBASE_APP_ID: 'local-demo-app',
+    NEXT_PUBLIC_USE_FIREBASE_EMULATORS: 'true',
     NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: '',
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '',
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: '',
@@ -39,6 +40,7 @@ function localTrainingEnv() {
     CLOUDINARY_API_KEY: '', CLOUDINARY_API_SECRET: '', CLOUDINARY_URL: '',
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: '',
     NEXT_TELEMETRY_DISABLED: '1',
+    GEMINI_API_KEY: '',
   };
 }
 module.exports = { localTrainingEnv, PROJECT_ID, ORIGIN };

@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const draft = db.collection("content_drafts").doc(value.collection + "__" + value.recordId);
     const batch = db.batch();
     batch.set(draft, { collection: value.collection, recordId: value.recordId, data: { ...value.data, status: "draft", updatedBy: identity.uid, updatedAt: FieldValue.serverTimestamp() } });
+    batch.set(db.collection("content_translation_state").doc(value.collection + "__" + value.recordId), { fields: value.translationState || {}, updatedBy: identity.uid, updatedAt: FieldValue.serverTimestamp() });
     batch.create(db.collection("audit_logs").doc(), { action: "record.version.restored_to_draft", collection: value.collection, recordId: value.recordId, actorUid: identity.uid, at: FieldValue.serverTimestamp() });
     await batch.commit(); return Response.json({ ok: true });
   } catch (error) { return authErrorResponse(error); }

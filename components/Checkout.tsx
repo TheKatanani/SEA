@@ -397,16 +397,19 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
 
         <div className="receipt-header">
           <div className="receipt-brand">
-            <h2>{en ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</h2>
-            <p>{en ? "Official Seat Registration Confirmation" : "إشعار تأكيد حجز مقعد تدريبي رسمي"}</p>
+            <h1>{en ? "Booking status" : "حالة الحجز"}</h1>
+            <p>{en ? "Saudi Entertainment Academy" : "الأكاديمية السعودية للترفيه"}</p>
           </div>
           {b?.status === "CONFIRMED" && (
             <div className="official-stamp">
               <CheckCircle2 size={16} />
-              <span>{en ? "OFFICIALLY CONFIRMED" : "معتمد ومؤكد رسمياً"}</span>
+              <span>{en ? "Seat confirmed" : "المقعد مؤكد"}</span>
             </div>
           )}
         </div>
+
+        {process.env.NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY?.startsWith("pk_test_") && <p className="training-demo-note">{en ? "Test booking only — this is not actual course enrolment." : "حجز تجريبي فقط — لا يمثل تسجيلاً فعلياً في دورة."}</p>}
+        {!b && !error && <p role="status">{en ? "Checking booking status…" : "جارٍ التحقق من حالة الحجز…"}</p>}
 
         {error && (
           <div className="training-alert training-alert--error" role="alert">
@@ -453,7 +456,7 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
                 <dd>{en ? data.cohort.venueEn : data.cohort.venueAr} · {en ? data.cohort.scheduleEn : data.cohort.scheduleAr}</dd>
               </div>
               <div className="receipt-fact">
-                <dt>{en ? "Amount Paid" : "المبلغ المدفوع"}</dt>
+                <dt>{en ? "Booking amount" : "قيمة الحجز"}</dt>
                 <dd style={{ color: "var(--sea-primary)", fontSize: "18px" }}>
                   {new Intl.NumberFormat(en ? "en-SA" : "ar-SA", { style: "currency", currency: b.currency }).format(b.amountMinor / 100)}
                 </dd>
@@ -468,7 +471,7 @@ export function BookingReceipt({ bookingId, callback = false }: { bookingId?: st
               {b.status === "CONFIRMED" && (
                 <button className="button button--primary no-print" onClick={() => window.print()}>
                   <Printer size={16} />
-                  {en ? "Print Official Receipt / PDF" : "طباعة الإشعار الرسمي / حفظ PDF"}
+                  {en ? "Print receipt / PDF" : "طباعة الإيصال / حفظ PDF"}
                 </button>
               )}
               {b.status === "PENDING" && (

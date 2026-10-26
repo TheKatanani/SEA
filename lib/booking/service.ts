@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { activeHolds, availability, BookingError, cohortSchema, HOLD_MS, idSchema, paymentDecision, reserve, searchTokens, validateCapacity, type Attendee, type Booking, type Cohort, type CohortInput, type VerifiedPayment } from "./domain";
 import { bookingAccessToken, bookingSignature, secureEqual } from "./security";
+import { buildTranslationState, type ContentRecord, type TranslationState } from "@/lib/admin/content";
 
 export async function listCohorts(programCollection: string, programId: string) {
   const result = await getAdminDb().collection("cohorts").where("programCollection", "==", programCollection).where("programId", "==", programId).where("status", "==", "published").get();
@@ -15,7 +16,7 @@ export async function getCohort(id: string) {
   if (!document.exists) throw new BookingError("COHORT_NOT_FOUND", 404);
   return { ...document.data(), id: document.id } as Cohort;
 }
-export async function saveCohort(input: CohortInput, actor: string) {
+export async function saveCohort(input: CohortInput, actor: string, review?: { reviewed: string[]; aiPaths?: string[] }) {
   const parsed = cohortSchema.parse(input);
   const db = getAdminDb();
   const ref = parsed.id ? db.collection("cohorts").doc(parsed.id) : db.collection("cohorts").doc();
@@ -25,8 +26,11 @@ export async function saveCohort(input: CohortInput, actor: string) {
     const previous = await tx.get(ref);
     const program = await tx.get(db.collection(parsed.programCollection).doc(parsed.programId));
     const code = await tx.get(codeRef);
+    const draftRef = db.collection("content_drafts").doc("cohorts__" + ref.id);
+    const stateRef = db.collection("content_translation_state").doc("cohorts__" + ref.id);
+    const [draft, priorState] = await Promise.all([tx.get(draftRef), tx.get(stateRef)]);
     if (code.exists && code.data()?.cohortId !== ref.id) {
-      const existingCohortDoc = await tx.get(db.collection("cohorts").doc(code.data().cohortId));
+      const existingCohortDoc = await tx.get(db.collection("cohorts").doc(code.data()!.cohortId));
       if (existingCohortDoc.exists) {
         throw new BookingError("COHORT_CODE_EXISTS", 409);
       }
@@ -39,7 +43,12 @@ export async function saveCohort(input: CohortInput, actor: string) {
       if (old.programId !== parsed.programId || old.programCollection !== parsed.programCollection) throw new BookingError("COHORT_PROGRAM_IMMUTABLE", 400);
       if (old.cohortCode !== parsed.cohortCode) throw new BookingError("COHORT_CODE_IMMUTABLE", 400);
     }
-    tx.set(ref, { ...parsed, id: ref.id, confirmedSeats: old?.confirmedSeats || 0, holds: old ? activeHolds(old, now) : {}, createdAt: old?.createdAt || now, updatedAt: now });
+    const state = buildTranslationState("cohorts", parsed as ContentRecord, (draft.exists ? draft.data()?.data : old) as ContentRecord | undefined, (priorState.data()?.fields || {}) as TranslationState, review?.reviewed, review?.aiPaths);
+    if (review && parsed.status === "published" && Object.values(state).some(v => v.status !== "reviewed")) throw new BookingError("TRANSLATION_REVIEW_REQUIRED", 400);
+    const saved = { ...parsed, id: ref.id, confirmedSeats: old?.confirmedSeats || 0, holds: old ? activeHolds(old, now) : {}, createdAt: old?.createdAt || now, updatedAt: now };
+    if (old?.status === "published" && parsed.status === "draft") tx.set(draftRef, { data: saved, collection: "cohorts", recordId: ref.id });
+    else { tx.set(ref, saved); tx.delete(draftRef); }
+    tx.set(stateRef, { fields: state, updatedBy: actor, updatedAt: now });
     tx.set(codeRef, { cohortId: ref.id });
     tx.set(audit, { action: old ? "cohort.updated" : "cohort.created", collection: "cohorts", recordId: ref.id, actorUid: actor, at: FieldValue.serverTimestamp() });
   });
