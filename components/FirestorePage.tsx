@@ -283,7 +283,7 @@ export async function FirestorePage({ path }: { path: string }) {
     if (section.type === "record") {
       const record = recordsForCollection.find((item) => item.id === section.recordId);
       if (!record) return null;
-      return <RevealSection className="section-pad cms-page__section cms-page__section--record" key={index}><div className="page-shell"><div className="cms-page__copy">{section.heading && <h2>{section.heading}</h2>}{record ? <SingleCmsRecord record={record} locale={locale} /> : <div className="cms-collection-state">{english ? "This content is not published yet." : "هذا المحتوى غير منشور حاليًا."}</div>}</div></div></RevealSection>;
+      return <RevealSection className="section-pad cms-page__section cms-page__section--record" key={index}><div className="page-shell"><div className="cms-page__copy">{section.heading && <h2>{section.heading}</h2>}<SingleCmsRecord record={record} locale={locale} omitText={typeof translation.description === "string" ? translation.description : ""} /></div></div></RevealSection>;
     }
     if (bookingOptions && section.type === "form" && section.formType === detailPlan?.form) return <details key={index} id="interest-form" className="training-interest-container page-shell"><summary>{english ? "Questions or future cohorts? Register interest" : "استفسار أو اهتمام بدفعات قادمة؟"}</summary><PageSection section={section} locale={locale} /></details>;
     return <PageSection section={section} locale={locale} key={index} />;
