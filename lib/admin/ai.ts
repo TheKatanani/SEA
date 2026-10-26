@@ -36,8 +36,9 @@ export function validateSuggestions(input: z.infer<typeof aiRequestSchema>, raw:
     const facts = input.action === "draft" ? original.text + " " + (input.instruction || "") : original.text;
     const numbers: string[] = normalDigits(f.text).match(/\d+/g) || [];
     const originalNumbers: string[] = normalDigits(facts).match(/\d+/g) || [];
-    const urls = f.text.match(/https?:\/\/[^\s]+/g) || [];
-    if (numbers.some(n => !originalNumbers.includes(n)) || input.action === "translate" && originalNumbers.some(n => !numbers.includes(n)) || urls.some(url => !facts.includes(url))) throw new AssistanceError("AI_FACTS_CHANGED", 502);
+    const links = (text: string) => (text.match(/https?:\/\/[^\s<>"')\]}،؛]+/g) || []).map(url => url.replace(/[.!?؟]+$/, ""));
+    const urls = links(f.text), originalUrls = links(facts);
+    if (numbers.some(n => !originalNumbers.includes(n)) || input.action !== "draft" && originalNumbers.some(n => !numbers.includes(n)) || urls.some(url => !originalUrls.includes(url)) || input.action !== "draft" && originalUrls.some(url => !urls.includes(url))) throw new AssistanceError("AI_FACTS_CHANGED", 502);
     return { ...f, sourceHash: textHash(original.text) };
   });
 }
