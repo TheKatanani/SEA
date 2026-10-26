@@ -43,9 +43,9 @@ for (const locale of locales) {
   if (homeHtml.includes("Hero Banner") || homeHtml.includes("Strategic & Academic Partners Strip")) fail(`${locale} home page: editor-only placeholder headings are visible.`);
 
   const programsHtml = await (await fetch(localizedPath(locale, "/programs"), { cache: "no-store" })).text();
-  if (!programsHtml.includes("program-card__link") || !programsHtml.includes(locale === "en" ? "Apply now" : "قدّم الآن")) fail(`${locale} programs page: program cards or the application path are missing.`);
+  if (!programsHtml.includes("program-card__link") || !programsHtml.includes("/programs/crowd-management")) fail(`${locale} programs page: program cards or detail links are missing.`);
   const programDetailHtml = await (await fetch(localizedPath(locale, "/programs/crowd-management"), { cache: "no-store" })).text();
-  if (!programDetailHtml.includes(locale === "en" ? "Apply now" : "قدّم الآن") || !programDetailHtml.includes("cms-form-section")) fail(`${locale} program detail: the application CTA or interest form section is missing.`);
+  if (!programDetailHtml.includes(locale === "en" ? "Book your seat" : "احجز مقعدك") || !programDetailHtml.includes("cohorts-crowd-management") || !programDetailHtml.includes('id="interest-form"')) fail(`${locale} program detail: booking entry or the secondary interest form is missing.`);
 }
 
 for (const collection of ["programs", "courses", "gallery", "faqs", "partners", "policies", "support", "admissions", "resources", "calendar", "forms"]) {
