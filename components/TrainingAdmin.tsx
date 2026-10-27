@@ -6,6 +6,7 @@ import { cohortAutofill } from "@/lib/admin/cohort-autofill";
 import { cohortFieldName, cohortFieldIssues, validateCohortForm, type CohortFieldIssue } from "@/lib/admin/cohort-form";
 import type { PublicCohort } from "./CohortOptions";
 import { ContentAssistant, BilingualField } from "./ContentAssistant";
+import { CohortBriefAssistant } from "./CohortBriefAssistant";
 import { textPairs, type ContentRecord, type TranslationState } from "@/lib/admin/content";
 
 type Row = Record<string, unknown> & { id: string };
@@ -20,6 +21,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   const programPicker = useRef<HTMLSelectElement>(null), nameFields = useRef<HTMLDivElement>(null);
   const [allCohorts, setAllCohorts] = useState<Row[]>([]);
   const [form, setForm] = useState(empty);
+  const [editorRevision, setEditorRevision] = useState(0);
   const [savedForm, setSavedForm] = useState(empty);
   const [formError, setFormError] = useState(""), [formNotice, setFormNotice] = useState(""), [autofillNotice, setAutofillNotice] = useState("");
   const [fieldIssues, setFieldIssues] = useState<CohortFieldIssue[]>([]), [autofilling, setAutofilling] = useState(false);
@@ -91,6 +93,14 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   }, [load]);
 
   useEffect(() => {
+    if (collection !== "cohorts") return;
+    const id = new URLSearchParams(location.search).get("item");
+    if (id && /^[A-Za-z0-9_-]{1,150}$/.test(id)) void edit({ id });
+    // Open a cohort selected by a dashboard report once when this editor mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     let active = true; setCatalogLoading(true); setCatalogError(false);
     Promise.allSettled(["programs", "courses"].map(async collection => {
       const result = await request("/api/admin/data?collection=" + collection + "&view=published");
@@ -148,7 +158,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
         ...prev,
         { id: res?.id || String(Date.now()), cohortCode: savedCode, programId: savedProg, programCollection: savedCol }
       ]);
-      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({}); setReviewedTranslations([]); setAutofillNotice(""); deliveryEdited.current = false;
+      setForm(empty); setSavedForm(empty); setEditorRevision(v => v + 1); setCohortReview(false); setTranslationState({}); setReviewedTranslations([]); setAutofillNotice(""); deliveryEdited.current = false;
       await load();
       request("/api/admin/training?collection=cohorts").then((r) => {
         if (Array.isArray(r.items)) setAllCohorts(r.items);
@@ -511,7 +521,8 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
       {collection === "cohorts" && (
         <form ref={formElement} id="cohort-editor" className="training-form cohort-editor" onSubmit={save} noValidate>
           <div className="cohort-editor-heading"><PlusCircle size={22} /><h2>{form.id ? en ? "Edit cohort" : "تعديل الدفعة التدريبية" : en ? "Create new cohort" : "إضافة دفعة تدريبية جديدة"}</h2></div>
-          <ContentAssistant key={form.id || "new"} collection="cohorts" value={form} baseline={savedForm} english={en} available={aiAvailable} metadata={translationState} reviewed={reviewedTranslations} onReview={setReviewedTranslations} onChange={next => { setForm(next as unknown as typeof empty); setReviewedTranslations([]); }} request={request}>
+          <CohortBriefAssistant key={(form.id || "new") + ":" + editorRevision} value={form} english={en} available={aiAvailable} request={request} onChange={next => { setForm(next); setReviewedTranslations([]); setCohortReview(false); clearFormFeedback(); }} />
+          <ContentAssistant key={[form.id || "new", form.programCollection, form.programId, editorRevision].join(":")} collection="cohorts" value={form} baseline={savedForm} english={en} available={aiAvailable} metadata={translationState} reviewed={reviewedTranslations} onReview={setReviewedTranslations} onChange={next => { setForm(next as unknown as typeof empty); setReviewedTranslations([]); }} request={request}>
           <div className="cohort-source"><label>
               {en ? "Program" : "البرنامج الأكاديمي"}
               <select
@@ -540,7 +551,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
                 ))}
               </select>
             </label>
-            <button type="button" className="admin-secondary-button cohort-autofill" disabled={busy || catalogLoading || autofilling} onClick={() => void autoFillCohort()}><Sparkles size={16} />{autofilling ? en ? "Filling saved details…" : "جارٍ تعبئة البيانات المحفوظة…" : en ? "Auto-fill from course" : "تعبئة من الدورة"}</button></div>
+            <button type="button" className="admin-secondary-button cohort-autofill" disabled={busy || catalogLoading || autofilling} onClick={() => void autoFillCohort()}><Sparkles size={16} />{autofilling ? en ? "Filling saved details…" : "جارٍ تعبئة البيانات المحفوظة…" : en ? "Use saved course details" : "استخدام بيانات الدورة المحفوظة"}</button></div>
           <p className="cohort-source-hint">{en ? "Fill empty fields using saved course details or its latest cohort. Your entered values are kept." : "عبّئ الحقول الفارغة من بيانات الدورة المحفوظة أو أحدث دفعة لها، مع الاحتفاظ بالقيم التي أدخلتها."}</p>
           {autofillNotice && <p role="status" className="cohort-autofill-notice">{autofillNotice}</p>}
           {catalogError && <p role="alert" className="form-error">{en ? "Some course lists could not load." : "تعذر تحميل بعض قوائم الدورات."} <button type="button" className="text-link" onClick={() => setCatalogRetry(value => value + 1)}>{en ? "Retry" : "إعادة المحاولة"}</button></p>}
@@ -577,7 +588,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
               {en ? "Save draft" : "حفظ مسودة"}
             </button>
             <button type="button" className="btn-export" onClick={() => setCohortReview(v => !v)}>{en ? "Preview / Review & publish" : "معاينة / مراجعة ونشر"}</button>
-            <button type="button" className="btn-export" onClick={() => { if (JSON.stringify(form) === JSON.stringify(savedForm) || window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) { setForm(empty); setSavedForm(empty); setCohortReview(false); clearFormFeedback(); deliveryEdited.current = false; autofillGeneration.current++; setAutofilling(false); } }}>
+            <button type="button" className="btn-export" onClick={() => { if (JSON.stringify(form) === JSON.stringify(savedForm) || window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) { setForm(empty); setSavedForm(empty); setEditorRevision(v => v + 1); setCohortReview(false); clearFormFeedback(); deliveryEdited.current = false; autofillGeneration.current++; setAutofilling(false); } }}>
               {en ? "Clear" : "إلغاء"}
             </button>
           </div>

@@ -5,7 +5,7 @@ const path = require('node:path');
 const { createRequire } = require('node:module');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '..');
-let rows, queue, providerCalls, providerMode = 'ok', fastTimeout = false;
+let rows, queue, providerCalls, providerMode = 'ok', fastTimeout = false, providerReply;
 const db = {
   collection(name) {
     const query = (filters = [], cap = 1000) => ({
@@ -30,7 +30,7 @@ function load(relative) {
     if (name === '@/lib/firebase/admin' || name === './admin' && filename.includes('authorization')) return { getAdminDb: () => db, isFirebaseAdminConfigured: () => true, getAdminAuth: async () => ({ verifyIdToken: async token => { if (token === 'invalid') throw new Error('Invalid token'); return { uid: token }; } }) };
     if (name === 'firebase-admin/firestore') return { FieldValue: { serverTimestamp: () => Date.now() } };
     if (name === 'next/cache') return { revalidatePath() {} };
-    if (name === '@google/genai') return { ThinkingLevel: { LOW: 'low' }, GoogleGenAI: class { constructor(options) { this.models = { generateContent: async input => { providerCalls.push({ options, input }); if (providerMode === 'never') return new Promise(() => {}); if (providerMode === 'invalid') return { text: '{"fields":[{"key":"priceMinor","text":"100"}]}' }; const content = JSON.parse(input.contents); return { text: JSON.stringify({ fields: content.fields.map(f => ({ key: f.key, text: f.text || content.instruction })) }) }; } }; } } };
+    if (name === '@google/genai') return { ThinkingLevel: { LOW: 'low' }, GoogleGenAI: class { constructor(options) { this.models = { generateContent: async input => { providerCalls.push({ options, input }); if (providerMode === 'never') return new Promise(() => {}); if (providerMode === 'invalid') return { text: '{"fields":[{"key":"priceMinor","text":"100"}]}' }; if (providerReply !== undefined) return { text: JSON.stringify(providerReply) }; const content = JSON.parse(input.contents); return { text: JSON.stringify({ fields: content.fields.map(f => ({ key: f.key, text: f.text || content.instruction })) }) }; } }; } } };
     if (name.startsWith('@/')) return load(name.slice(2));
     if (name.startsWith('.')) return load(path.relative(root, path.resolve(path.dirname(filename), name)));
     return requireAt(name);
@@ -39,7 +39,7 @@ function load(relative) {
   new Function('require', 'module', 'exports', 'setTimeout', 'clearTimeout', compiled)(localRequire, module, module.exports, (fn, delay) => setTimeout(fn, fastTimeout && delay === 20000 ? 5 : delay), clearTimeout);
   return module.exports;
 }
-function reset() { rows = new Map(); queue = Promise.resolve(); providerCalls = []; providerMode = 'ok'; fastTimeout = false; process.env.FIREBASE_OWNER_UID = 'owner'; delete process.env.GEMINI_API_KEY; for (const role of ['editor', 'admissions', 'media', 'admin']) rows.set('admins/' + role, { role, active: true }); }
+function reset() { rows = new Map(); queue = Promise.resolve(); providerCalls = []; providerMode = 'ok'; fastTimeout = false; providerReply = undefined; process.env.FIREBASE_OWNER_UID = 'owner'; delete process.env.GEMINI_API_KEY; for (const role of ['editor', 'admissions', 'media', 'admin']) rows.set('admins/' + role, { role, active: true }); }
 reset();
 const content = load('lib/admin/content.ts'), ai = load('lib/admin/ai.ts'), aiRoute = load('app/api/admin/ai/route.ts'), session = load('app/api/admin/session/route.ts'), admin = load('app/api/admin/data/route.ts'), layout = load('lib/public-layout.ts');
 const input = (text = 'Course 25') => ({ collection: 'courses', action: 'translate', sourceLocale: 'en', targetLocale: 'ar', fields: [{ key: 'title', text }] });
@@ -208,4 +208,93 @@ test("admin language toggle has accessible actions for both interface languages"
   const arabic = renderToStaticMarkup(React.createElement(AdminLanguageToggle, { english:false, onSwitch(){} }));
   assert.match(english,/type="button"/); assert.ok(english.includes('aria-label="Switch dashboard to Arabic"')); assert.ok(english.includes('lang="ar">العربية'));
   assert.ok(arabic.includes('lang="en">English')); assert.ok(arabic.includes("تغيير لغة لوحة الإدارة إلى الإنجليزية"));
+});
+
+test("cohort brief extraction requires real evidence and protects operational fields", () => {
+  const { validateCohortSuggestions, cohortSuggestionsSchema } = load("lib/admin/cohort-ai.ts");
+  const brief = "الرسوم: ٥٠٠ ريال. السعة: ٢٥ مقعداً. البداية: 2026-11-15 09:00. النهاية: 2026-11-19 15:00. الموقع: مقر الرياض.";
+  const fields = [{ key:"price",text:"500",evidence:"الرسوم: ٥٠٠ ريال" },{key:"capacity",text:"25",evidence:"السعة: ٢٥ مقعداً"},{key:"start",text:"2026-11-15T09:00",evidence:"البداية: 2026-11-15 09:00"},{key:"venueEn",text:"Riyadh campus",evidence:"الموقع: مقر الرياض"}];
+  const result = validateCohortSuggestions(brief,{fields}); assert.equal(result.fields.length,4); assert.equal(result.sourceHash,content.textHash(brief));
+  assert.throws(()=>validateCohortSuggestions(brief,{fields:[{...fields[0],text:"600"}]}));
+  assert.throws(()=>validateCohortSuggestions(brief,{fields:[{...fields[0],evidence:"Invented source"}]}));
+  assert.equal(validateCohortSuggestions("Fee: 500 SAR",{fields:[{key:"capacity",text:"500",evidence:"Fee: 500 SAR"}]}).fields.length,0);
+  assert.equal(validateCohortSuggestions("Start: 2026-11-15",{fields:[{key:"start",text:"2026-11-15T11:15",evidence:"Start: 2026-11-15"}]}).fields.length,0);
+  const natural="البداية: ١٥ نوفمبر ٢٠٢٦ ٠٩:٠٠. End: November 19, 2026 03:00 PM.";
+  assert.equal(validateCohortSuggestions(natural,{fields:[{key:"start",text:"2026-11-15T09:00",evidence:"البداية: ١٥ نوفمبر ٢٠٢٦ ٠٩:٠٠"},{key:"end",text:"2026-11-19T15:00",evidence:"End: November 19, 2026 03:00 PM"}]}).fields.length,2);
+  assert.equal(validateCohortSuggestions("Start: 03/04/2026 09:00",{fields:[{key:"start",text:"2026-04-03T09:00",evidence:"Start: 03/04/2026 09:00"}]}).fields.length,0);
+  assert.equal(validateCohortSuggestions("Start: 2026-02-30 09:00",{fields:[{key:"start",text:"2026-02-30T09:00",evidence:"Start: 2026-02-30 09:00"}]}).fields.length,0);
+  for(const key of ["id","cohortCode","status","registrationOpen","programId","locationType"])assert.equal(cohortSuggestionsSchema.safeParse({fields:[{key,text:"true",evidence:brief}]}).success,false);
+});
+
+test("accepted cohort facts fill blank fields only and preserve edits made during AI requests", () => {
+  const { applyCohortSuggestions }=load("lib/admin/cohort-ai.ts");
+  const baseline={price:"",capacity:"",start:"",titleAr:"يدوي",status:"draft",registrationOpen:false};
+  const current={...baseline,capacity:"40"};
+  const fields=[{key:"price",text:"500"},{key:"capacity",text:"25"},{key:"titleAr",text:"مقترح"}];
+  const next=applyCohortSuggestions(current,baseline,fields,["price","capacity","titleAr"]);
+  assert.equal(next.price,"500"); assert.equal(next.capacity,"40"); assert.equal(next.titleAr,"يدوي"); assert.equal(next.status,"draft"); assert.equal(next.registrationOpen,false); assert.equal(current.price,"");
+});
+
+test("brief endpoint is admin-only, validates origin and returns reviewable facts without saving records", async () => {
+  reset(); const route=load("app/api/admin/ai/cohort/route.ts"),body={brief:"Fee: 500 SAR. Capacity: 25 seats."};
+  assert.equal((await route.POST(request("/api/admin/ai/cohort",body,""))).status,401);
+  assert.equal((await route.POST(request("/api/admin/ai/cohort",body,"editor"))).status,403);
+  assert.equal((await route.POST(request("/api/admin/ai/cohort",body))).status,503);
+  process.env.GEMINI_API_KEY="server-test-only"; providerReply={fields:[{key:"price",text:"500",evidence:"Fee: 500 SAR"}]};
+  const before=[...rows.keys()].filter(k=>!k.startsWith("ai_usage/"));
+  const response=await route.POST(request("/api/admin/ai/cohort",body));assert.equal(response.status,200);assert.equal((await response.json()).fields[0].text,"500");
+  assert.deepEqual([...rows.keys()].filter(k=>!k.startsWith("ai_usage/")),before);
+  const cross=request("/api/admin/ai/cohort",body);cross.headers.set("origin","https://evil.invalid");assert.equal((await route.POST(cross)).status,403);
+});
+
+test("manual translation edits invalidate delayed suggestions and review queues track both directions", () => {
+  const { suggestionIsCurrent,translationTasks }=load("lib/admin/assistance.ts");
+  const pair={key:"title",source:"دورة",target:""},suggestion={key:"title",text:"Course",sourceText:pair.source,sourceHash:content.textHash(pair.source),targetText:""};
+  assert.equal(suggestionIsCurrent(suggestion,[pair]),true);assert.equal(suggestionIsCurrent(suggestion,[{...pair,target:"Manual translation"}]),false);
+  const record={locales:{ar:{title:"دورة",description:""},en:{title:"",description:"Description"}}};
+  const tasks=translationTasks("courses",record);assert.ok(tasks.some(t=>t.key==="title"&&t.locale==="ar"&&t.reason==="missing"));assert.ok(tasks.some(t=>t.key==="description"&&t.locale==="en"));
+});
+
+test("language review excludes structural/private fields and returns advisory findings only", async () => {
+  reset(); process.env.GEMINI_API_KEY="server-test-only"; const route=load("app/api/admin/ai/review/route.ts"),{reviewHash}=load("lib/admin/ai-review.ts");
+  const body={collection:"courses",fields:[{key:"title",ar:"الدورة 25",en:"Course 26"}]};
+  providerReply={issues:[{key:"title",messageAr:"الرقم مختلف",messageEn:"Different number"}]};
+  const response=await route.POST(request("/api/admin/ai/review",body,"editor"));assert.equal(response.status,200);const data=await response.json();assert.equal(data.sourceHash,reviewHash(body.fields));assert.equal(data.issues.length,1);
+  assert.equal((await route.POST(request("/api/admin/ai/review",{...body,fields:[{key:"priceMinor",ar:"25",en:"26"}]}))).status,400);
+  assert.equal((await route.POST(request("/api/admin/ai/review",{...body,collection:"applications"}))).status,400);
+  assert.equal((await route.POST(request("/api/admin/ai/review",body,"media"))).status,403);
+  providerReply={issues:[{key:"capacity",messageAr:"نص",messageEn:"Text"}]};
+  assert.equal((await route.POST(request("/api/admin/ai/review",{...body,fields:[{key:"description",ar:"وصف",en:"Description"}]}))).status,502);
+});
+
+test("dashboard reports calculate availability including holds and distinguish courses with shared IDs", () => {
+  const {buildInsight}=load("lib/admin/insights.ts"),now=Date.parse("2026-10-27T00:00:00Z");
+  const cohort={id:"c1",programCollection:"courses",programId:"shared",status:"published",registrationOpen:true,capacity:25,confirmedSeats:20,holds:{active:now+1000,expired:now-1000},startAt:"2026-11-15T06:00:00Z",titleAr:"دفعة",titleEn:"Cohort"};
+  const courses=[{id:"shared",collection:"courses",status:"published",locales:{en:{title:"Course"}}},{id:"shared",collection:"programs",status:"published",locales:{en:{title:"Program"}}}];
+  const missing=buildInsight("missing_upcoming",[cohort],courses,now);assert.equal(missing.total,1);assert.equal(missing.rows[0].collection,"programs");
+  const full=buildInsight("nearly_full",[cohort],courses,now);assert.equal(full.rows[0].remaining,4);assert.equal(full.rows[0].capacity,25);
+  assert.equal(buildInsight("registration_closed",[{...cohort,registrationOpen:false}],[],now).total,1);
+  assert.equal(buildInsight("draft_cohorts",[{...cohort,status:"draft"}],[],now).total,1);
+});
+
+test("dashboard questions send no records to Gemini and quick reports work without an AI key", async () => {
+  reset();const route=load("app/api/admin/ai/insights/route.ts");
+  rows.set("cohorts/draft",{status:"draft",titleAr:"عنوان خاص في قاعدة البيانات",titleEn:"Database-only title",capacity:25,confirmedSeats:0,holds:{},startAt:"2026-11-15T06:00:00Z"});
+  assert.equal((await route.POST(request("/api/admin/ai/insights",{report:"draft_cohorts"},"editor"))).status,403);
+  const quick=await route.POST(request("/api/admin/ai/insights",{report:"draft_cohorts"}));assert.equal(quick.status,200);assert.equal((await quick.json()).total,1);assert.equal(providerCalls.length,0);
+  process.env.GEMINI_API_KEY="server-test-only";providerReply={report:"draft_cohorts"};
+  const response=await route.POST(request("/api/admin/ai/insights",{question:"Show draft cohorts"}));assert.equal(response.status,200);assert.deepEqual(JSON.parse(providerCalls[0].input.contents),{question:"Show draft cohorts"});
+  assert.ok(!JSON.stringify(providerCalls).includes("Database-only title"));assert.equal(rows.get("cohorts/draft").status,"draft");
+  providerReply={report:"unsupported"};assert.equal((await route.POST(request("/api/admin/ai/insights",{question:"Delete all bookings"}))).status,422);
+  for(let i=0;i<1001;i++)rows.set("cohorts/many-"+i,{status:"draft"});assert.equal((await route.POST(request("/api/admin/ai/insights",{report:"missing_upcoming"}))).status,422);
+});
+
+test("record assistance and dashboard reports render usable Arabic and English controls", () => {
+  const React=require("react"),{renderToStaticMarkup}=require("react-dom/server"),{DashboardAssistant}=load("components/DashboardAssistant.tsx"),{CohortBriefAssistant}=load("components/CohortBriefAssistant.tsx");
+  for(const english of [false,true]){
+    const dashboard=renderToStaticMarkup(React.createElement(DashboardAssistant,{english,available:false,request:async()=>({}),onOpen(){}}));
+    assert.ok(dashboard.includes(english?"Ask your dashboard":"اسأل لوحة الإدارة"));assert.ok(dashboard.includes(english?"Draft cohorts":"دفعات بانتظار النشر"));
+    const cohort=renderToStaticMarkup(React.createElement(CohortBriefAssistant,{english,available:true,value:{},request:async()=>({}),onChange(){}}));
+    assert.ok(cohort.includes(english?"Prepare form suggestions":"تجهيز اقتراحات النموذج"));assert.match(cohort,/maxLength="8000"/i);
+  }
 });

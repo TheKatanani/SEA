@@ -1,12 +1,13 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Sparkles, Languages, Check, X, LoaderCircle, Plus, Trash2 } from "lucide-react";
-import { allowedTextPath, applyText, buildTranslationState, getPath, localePath, setPath, textHash, textPairs, type ContentRecord, type Locale, type TranslationState } from "@/lib/admin/content";
-import { assistanceBatch, editableTextPairs, suggestionIsCurrent } from "@/lib/admin/assistance";
+import { allowedTextPath, applyText, buildTranslationState, fieldsFor, getPath, localePath, setPath, textHash, textPairs, type ContentRecord, type Locale, type TranslationState } from "@/lib/admin/content";
+import { assistanceBatch, editableTextPairs, suggestionIsCurrent, translationTasks } from "@/lib/admin/assistance";
+import { reviewHash } from "@/lib/admin/ai-review";
 
 type Action = "draft" | "improve" | "shorten" | "translate";
-type Suggestion = { key: string; text: string; sourceHash: string; sourceText: string; sourceLocale: Locale; locale: Locale };
-type Result = { fields?: Array<{ key: string; text: string; sourceHash: string }> };
+type Suggestion = { key: string; text: string; sourceHash: string; sourceText: string; targetText?: string; sourceLocale: Locale; locale: Locale };
+type Result = { fields?: Array<{ key: string; text: string; sourceHash: string }>; issues?: Array<{ key: string; messageAr: string; messageEn: string }>; sourceHash?: string };
 type AssistantContext = {
   collection: string; value: ContentRecord; english: boolean; available: boolean; busy: boolean; busyKeys: string[];
   state: TranslationState; suggestions: Record<string, Suggestion>;
@@ -28,6 +29,9 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
   const [suggestions, setSuggestions] = useState<Record<string, Suggestion>>({});
   const [busyKeys, setBusyKeys] = useState<string[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [automatic, setAutomatic] = useState(true), [completed, setCompleted] = useState(0);
+  const [brief, setBrief] = useState(""), [draftLocale, setDraftLocale] = useState<Locale>("ar"), [batchBusy, setBatchBusy] = useState(false);
+  const batchRunning = useRef(false);
+  const [reviewResult, setReviewResult] = useState<{ signature: string; issues: NonNullable<Result["issues"]>; checked: number; skipped: number } | null>(null);
   const current = useRef(value), mounted = useRef(true), pending = useRef(false);
   const seen = useRef(new Set<string>()), cache = useRef(new Map<string, Suggestion[]>());
   const activeFields = useRef(new Map<string, number>()), directions = useRef(new Map<string, Locale>());
@@ -35,6 +39,9 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
   const state = useMemo(() => buildTranslationState(collection, value, baseline, metadata, reviewed), [collection, value, baseline, metadata, reviewed]);
   const pairs = useMemo(() => ({ ar: textPairs(collection, value, "ar"), en: textPairs(collection, value, "en") }), [collection, value]);
   const signature = JSON.stringify([pairs.ar, pairs.en]);
+  const tasks = translationTasks(collection, value, baseline, metadata, reviewed);
+  const fieldLabel = (key: string) => fieldsFor(collection).find(f => f.key === key.split(".")[0])?.[en ? "en" : "ar"] || (en ? "Content field" : "حقل محتوى");
+  const currentSuggestions = Object.entries(suggestions).filter(([, entry]) => suggestionIsCurrent(entry, editableTextPairs(collection, value, entry.sourceLocale, [entry.key])));
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   function register(key: string) {
     activeFields.current.set(key, (activeFields.current.get(key) || 0) + 1);
@@ -49,6 +56,7 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
   async function generate(action: Action, locale: Locale, keys: string[], brief = "") {
     if (!available || pending.current) return;
     const fields = assistanceBatch(editableTextPairs(collection, current.current, locale, keys), keys, action, brief);
+    const snapshot = editableTextPairs(collection, current.current, locale, keys);
     if (!fields.length || action === "draft" && !brief.trim()) return;
     pending.current = true; setBusy(true); setBusyKeys(fields.map(field => field.key)); setError("");
     const cacheKey = JSON.stringify([collection, locale, action, brief, fields]);
@@ -61,6 +69,7 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
         if (cache.current.size >= 100) cache.current.delete(cache.current.keys().next().value!);
         cache.current.set(cacheKey, entries);
       }
+      entries = entries.map(entry => ({ ...entry, ...(action === "translate" ? { targetText: snapshot.find(pair => pair.key === entry.key)?.target || "" } : {}) }));
       if (!mounted.current) return;
       const now = editableTextPairs(collection, current.current, locale, fields.map(field => field.key));
       setSuggestions(old => ({ ...old, ...Object.fromEntries(entries.filter(entry => suggestionIsCurrent(entry, now)).map(entry => [entry.locale + ":" + entry.key, entry])) }));
@@ -74,7 +83,7 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
     }
   }
   useEffect(() => {
-    if (!available || !automatic || busy) return;
+    if (!available || !automatic || busy || batchBusy) return;
     const timer = setTimeout(() => {
       for (const locale of ["ar", "en"] as const) {
         const changed = pairs[locale].filter(pair => {
@@ -90,7 +99,57 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
     return () => clearTimeout(timer);
     // UI changes do not start requests. One batch at a time shares the existing API limits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature, automatic, available, busy, completed]);
+  }, [signature, automatic, available, busy, completed, batchBusy]);
+  async function complete(action: "draft" | "translate") {
+    if (pending.current || batchRunning.current) return;
+    batchRunning.current = true; setBatchBusy(true);
+    // The queue is fixed at click time. New user edits are protected by source/target snapshots.
+    const queue = action === "translate" ? (["ar", "en"] as const).map(locale => ({ locale, keys: translationTasks(collection, current.current, baseline, metadata, reviewed).filter(task => task.locale === locale && task.reason !== "suggested").map(task => task.key) }))
+      : [{ locale: draftLocale, keys: editableTextPairs(collection, current.current, draftLocale, activeFields.current.keys()).filter(pair => activeFields.current.has(pair.key) && !pair.source.trim() && !pair.target.trim()).map(pair => pair.key) }];
+    try {
+      for (const job of queue) {
+        let remaining = [...job.keys];
+        while (remaining.length && mounted.current) {
+          const fields = assistanceBatch(editableTextPairs(collection, current.current, job.locale, remaining), remaining, action, brief);
+          if (!fields.length) break;
+          await generate(action, job.locale, fields.map(f => f.key), brief);
+          remaining = remaining.filter(key => !fields.some(f => f.key === key));
+        }
+      }
+    } finally { batchRunning.current = false; if (mounted.current) setBatchBusy(false); }
+  }
+  function acceptAll() {
+    let next = current.current; const accepted: string[] = [];
+    for (const [id, suggestion] of currentSuggestions) {
+      if (!suggestionIsCurrent(suggestion, editableTextPairs(collection, next, suggestion.sourceLocale, [suggestion.key]))) continue;
+      try { next = applyText(next, collection, suggestion.locale, suggestion.key, suggestion.text, suggestion.sourceLocale); accepted.push(id); } catch { /* A mismatched form structure remains editable manually. */ }
+    }
+    if (accepted.length) { onChange(next); onReview([...new Set([...reviewed, ...accepted.flatMap(id => [id, other(id.startsWith("ar:") ? "ar" : "en") + id.slice(2)])])]); setSuggestions(old => Object.fromEntries(Object.entries(old).filter(([id]) => !accepted.includes(id)))); }
+  }
+  async function compareLanguages() {
+    if (pending.current || batchRunning.current || !available) return;
+    batchRunning.current = true; pending.current = true; setBatchBusy(true); setReviewResult(null); setError("");
+    const fields = pairs.ar.filter(pair => pair.source.trim() && pair.target.trim()).map(pair => ({ key: pair.key, ar: pair.source.trim(), en: pair.target.trim() }));
+    const issues: NonNullable<Result["issues"]> = []; let checked = 0, skipped = 0;
+    try {
+      let remaining = [...fields];
+      while (remaining.length && mounted.current) {
+        let size = 0; const batch: typeof fields = [];
+        while (remaining.length && batch.length < 20) {
+          const field = remaining[0], length = field.ar.length + field.en.length;
+          if (length > 12000) { remaining.shift(); skipped++; continue; }
+          if (size + length > 12000) break;
+          batch.push(remaining.shift()!); size += length;
+        }
+        if (!batch.length) continue;
+        const result = await request("/api/admin/ai/review", { method: "POST", body: JSON.stringify({ collection, fields: batch }) });
+        if (result.sourceHash !== reviewHash(batch)) throw new Error("Stale review");
+        issues.push(...result.issues || []); checked += batch.length;
+      }
+      if (mounted.current) setReviewResult({ signature, issues, checked, skipped });
+    } catch { if (mounted.current) setError(en ? "The language check could not finish. Review manually or retry." : "تعذر إتمام فحص اللغتين. راجع يدوياً أو أعد المحاولة."); }
+    finally { pending.current = false; batchRunning.current = false; if (mounted.current) setBatchBusy(false); }
+  }
   function dismiss(id: string) { setSuggestions(old => { const next = { ...old }; delete next[id]; return next; }); }
   function accept(id: string) {
     const suggestion = suggestions[id];
@@ -101,7 +160,7 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
       dismiss(id);
     } catch { setError(en ? "Align the form fields first." : "وحّد ترتيب حقول النموذج أولاً."); }
   }
-  return <Context.Provider value={{ collection, value, english: en, available, busy, busyKeys, state, suggestions, change, generate, accept, dismiss,
+  return <Context.Provider value={{ collection, value, english: en, available, busy: busy || batchBusy, busyKeys, state, suggestions, change, generate, accept, dismiss,
     register, onChange, review: key => onReview([...new Set([...reviewed, "ar:" + key, "en:" + key])]),
     editSuggestion: (id, text) => setSuggestions(old => ({ ...old, [id]: { ...old[id], text } })),
   }}>
@@ -111,6 +170,17 @@ export function ContentAssistant({ collection, value, baseline, english: en, ava
         : <small>{en ? "AI unavailable · both languages can be edited manually" : "المساعد غير متاح · يمكنك تحرير اللغتين يدوياً"}</small>}
       {busy && <span role="status"><LoaderCircle className="spin" size={15} />{en ? "Preparing suggestions…" : "جارٍ إعداد الاقتراحات…"}</span>}
     </div>
+    <section className="record-ai-panel">
+      <h3><Sparkles size={17} />{en ? "Complete & review this record" : "إكمال ومراجعة هذا السجل"}</h3>
+      {available && <>
+        {collection !== "policies" && collection !== "cohorts" && <><label className="structured-field"><span>{en ? "Facts for missing wording (optional)" : "حقائق لصياغة النصوص الناقصة (اختياري)"}</span><textarea rows={2} maxLength={1200} value={brief} onChange={e => setBrief(e.target.value)} placeholder={en ? "Paste approved facts to use for missing text. No personal or payment details." : "الصق الحقائق المعتمدة لصياغة النصوص الناقصة، دون بيانات شخصية أو مدفوعات."} /></label><div className="assistant-actions"><label>{en ? "Draft language " : "لغة الصياغة "}<select value={draftLocale} onChange={e => setDraftLocale(e.target.value as Locale)}><option value="ar">العربية</option><option value="en">English</option></select></label><button type="button" className="admin-secondary-button" disabled={busy || batchBusy || !brief.trim()} onClick={() => void complete("draft")}>{en ? "Suggest missing wording" : "اقتراح النصوص الناقصة"}</button></div></>}
+        <div className="assistant-actions"><button type="button" className="admin-secondary-button" disabled={busy || batchBusy || !tasks.some(t => t.reason !== "suggested")} onClick={() => void complete("translate")}><Languages size={15} />{en ? "Complete missing / outdated translations" : "إكمال الترجمات الناقصة / القديمة"}</button><button type="button" className="admin-secondary-button" disabled={busy || batchBusy || !pairs.ar.some(pair => pair.source.trim() && pair.target.trim())} onClick={() => void compareLanguages()}>{en ? "Check Arabic / English meaning" : "فحص توافق المعنى باللغتين"}</button>{currentSuggestions.length > 0 && <button type="button" className="admin-secondary-button" disabled={busy || batchBusy} onClick={acceptAll}><Check size={15} />{en ? "Accept reviewed suggestions" : "قبول الاقتراحات بعد مراجعتها"}</button>}</div>
+      </>}
+      {batchBusy && <p role="status"><LoaderCircle size={15} className="spin" />{en ? "Preparing the record review…" : "جارٍ تجهيز مراجعة السجل…"}</p>}
+      {reviewResult && reviewResult.signature === signature && <div className="translation-review-queue" role="status"><strong>{en ? "AI language check · advisory" : "فحص اللغتين بالمساعد · ملاحظات للمراجعة"}</strong><p>{en ? `${reviewResult.checked} fields checked. ${reviewResult.skipped} fields too long; review those manually.` : `تم فحص ${reviewResult.checked} حقول. ${reviewResult.skipped} حقول طويلة تحتاج مراجعة يدوية.`}</p>{reviewResult.issues.length ? <ul>{reviewResult.issues.map((issue, i) => <li key={i}><strong>{fieldLabel(issue.key)}</strong><span>{en ? issue.messageEn : issue.messageAr}</span></li>)}</ul> : <p>{en ? "No differences noticed in the checked fields. Confirm the facts yourself before publishing." : "لم يُلاحظ اختلاف في الحقول المفحوصة. أكد الحقائق بنفسك قبل النشر."}</p>}</div>}
+      {currentSuggestions.length > 0 && <div className="admin-data-scroll"><table className="admin-data-table"><thead><tr><th>{en ? "Field" : "الحقل"}</th><th>{en ? "Current text" : "النص الحالي"}</th><th>{en ? "Suggestion" : "الاقتراح"}</th><th>{en ? "Action" : "الإجراء"}</th></tr></thead><tbody>{currentSuggestions.map(([id, s]) => <tr key={id}><td>{fieldLabel(s.key)} · {nameOf(s.locale)}</td><td>{String(getPath(value, localePath(collection, s.locale, s.key)) || "—")}</td><td><textarea aria-label={(en ? "Suggested " : "اقتراح ") + fieldLabel(s.key) + " " + nameOf(s.locale)} dir={s.locale === "ar" ? "rtl" : "ltr"} value={s.text} onChange={e => setSuggestions(old => ({ ...old, [id]: { ...s, text: e.target.value } }))} rows={2} /></td><td><button type="button" className="text-link" onClick={() => accept(id)}>{en ? "Accept" : "قبول"}</button> <button type="button" className="text-link" onClick={() => dismiss(id)}>{en ? "Dismiss" : "تجاهل"}</button></td></tr>)}</tbody></table></div>}
+      <div className="translation-review-queue"><strong>{en ? "Before publishing" : "قبل النشر"}</strong>{!tasks.length ? <p>{en ? "No outstanding translation reviews." : "لا توجد ترجمات بانتظار المراجعة."}</p> : <ul>{tasks.map(task => <li key={task.key}><span>{fieldLabel(task.key)} · {task.reason === "missing" ? en ? "Translation missing" : "الترجمة ناقصة" : task.reason === "outdated" ? en ? "Source changed" : "تغير المصدر" : en ? "Review both languages" : "راجع اللغتين"}</span><button type="button" className="text-link" onClick={() => { const target = document.getElementsByName(localePath(collection, task.locale, task.key))[0]; target?.scrollIntoView({ behavior: "smooth", block: "center" }); target?.focus(); }}>{en ? "Go to field" : "انتقل للحقل"}</button>{task.reason !== "missing" && <button type="button" className="text-link" onClick={() => onReview([...new Set([...reviewed, "ar:" + task.key, "en:" + task.key])])}>{en ? "I reviewed both languages" : "راجعت اللغتين"}</button>}</li>)}</ul>}</div>
+    </section>
     {error && <p role="alert" className="form-error bilingual-editor-error">{error}</p>}
     {children}
   </Context.Provider>;

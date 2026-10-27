@@ -1,9 +1,21 @@
-import { allowedTextPath, getPath, localePath, textHash, textPairs, type ContentRecord, type Locale, type TextPair } from "./content";
+import { allowedTextPath, buildTranslationState, getPath, localePath, textHash, textPairs, type ContentRecord, type Locale, type TextPair } from "./content";
 
-export type ContentSuggestion = { key: string; text: string; sourceHash: string; sourceText: string };
+export type ContentSuggestion = { key: string; text: string; sourceHash: string; sourceText: string; targetText?: string };
 
 export function suggestionIsCurrent(suggestion: ContentSuggestion, pairs: TextPair[]) {
-  return pairs.some(pair => pair.key === suggestion.key && pair.source === suggestion.sourceText && textHash(pair.source) === suggestion.sourceHash);
+  return pairs.some(pair => pair.key === suggestion.key && pair.source === suggestion.sourceText && textHash(pair.source) === suggestion.sourceHash && (suggestion.targetText === undefined || pair.target === suggestion.targetText));
+}
+
+export function translationTasks(collection: string, value: ContentRecord, baseline?: ContentRecord, metadata = {}, reviewed: string[] = []) {
+  const state = buildTranslationState(collection, value, baseline, metadata, reviewed);
+  const tasks = new Map<string, { key: string; locale: Locale; reason: string }>();
+  for (const locale of ["ar", "en"] as const) for (const pair of textPairs(collection, value, locale)) {
+    const status = state[locale + ":" + pair.key]?.status;
+    if (pair.source.trim() && (!pair.target.trim() || status === "outdated" || status === "suggested")) {
+      if (!tasks.has(pair.key) || !pair.target.trim() || status === "outdated") tasks.set(pair.key, { key: pair.key, locale, reason: !pair.target.trim() ? "missing" : status || "suggested" });
+    }
+  }
+  return [...tasks.values()];
 }
 
 export function assistanceBatch(pairs: TextPair[], keys: string[], action: string, brief = "") {
