@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check, Sparkles } from "lucide-react";
-import { cohortSuggestion } from "@/lib/admin/cohort-autofill";
+import { cohortAutofill } from "@/lib/admin/cohort-autofill";
+import { cohortFieldName, cohortFieldIssues, validateCohortForm, type CohortFieldIssue } from "@/lib/admin/cohort-form";
 import type { PublicCohort } from "./CohortOptions";
 import { ContentAssistant, BilingualField } from "./ContentAssistant";
 import { textPairs, type ContentRecord, type TranslationState } from "@/lib/admin/content";
@@ -20,6 +21,13 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   const [allCohorts, setAllCohorts] = useState<Row[]>([]);
   const [form, setForm] = useState(empty);
   const [savedForm, setSavedForm] = useState(empty);
+  const [formError, setFormError] = useState(""), [formNotice, setFormNotice] = useState(""), [autofillNotice, setAutofillNotice] = useState("");
+  const [fieldIssues, setFieldIssues] = useState<CohortFieldIssue[]>([]), [autofilling, setAutofilling] = useState(false);
+  const feedback = useRef<HTMLDivElement>(null), formElement = useRef<HTMLFormElement>(null), deliveryEdited = useRef(false), autofillGeneration = useRef(0), currentForm = useRef(form); currentForm.current = form;
+  useEffect(() => { if (formError) { feedback.current?.focus({ preventScroll: true }); feedback.current?.scrollIntoView({ behavior: "smooth", block: "center" }); } }, [formError]);
+  useEffect(() => () => { autofillGeneration.current++; }, []);
+  function focusField(name: string) { const element = formElement.current?.elements.namedItem(name); if (element instanceof HTMLElement) { element.scrollIntoView({ behavior: "smooth", block: "center" }); element.focus({ preventScroll: true }); } }
+  function clearFormFeedback() { setFormError(""); setFieldIssues([]); setFormNotice(""); setAutofillNotice(""); }
   const [reviewedTranslations, setReviewedTranslations] = useState<string[]>([]);
   const [cohortReview, setCohortReview] = useState(false), [cohortReviewed, setCohortReviewed] = useState(false);
   const [translationState, setTranslationState] = useState<TranslationState>({});
@@ -42,7 +50,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
         cache: "no-store",
       });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error || "REQUEST_FAILED");
+      if (!response.ok) throw Object.assign(new Error(body.error || "REQUEST_FAILED"), { details: body.details || [] });
       return body;
     },
     [user]
@@ -96,51 +104,43 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
     return () => { active = false; };
   }, [request, catalogRetry]);
 
-  function autoFillCohort() {
-    if (!form.programId) { setNotice(en ? "Choose a program or course below first." : "اختر البرنامج أو الدورة أدناه أولاً."); programPicker.current?.focus(); return; }
+  async function autoFillCohort() {
+    if (!form.programId) { setAutofillNotice(en ? "Choose a program or course first." : "اختر البرنامج أو الدورة أولاً."); programPicker.current?.focus(); return; }
     const program = programs.find(item => item.collection === form.programCollection && item.id === form.programId);
-    if (!program) { setNotice(en ? "The selected program is unavailable. Reload the course list and try again." : "البرنامج المختار غير متاح. أعد تحميل قائمة الدورات وحاول مجدداً."); return; }
-    const suggestion = cohortSuggestion({ ...program, collection: String(program.collection) }, [...allCohorts, ...items], form);
-    if (!suggestion) { setNotice(en ? "Add a title to this program before using autofill." : "أضف عنواناً للبرنامج أولاً حتى تعمل التعبئة التلقائية."); return; }
-    setForm(current => ({ ...current, ...suggestion })); setReviewedTranslations([]); setCohortReview(false);
-    setNotice(en ? "Cohort names and code filled. Confirm the fee, dates, venue and capacity before publishing." : "تمت تعبئة اسم الدفعة باللغتين ورمزها. أكد الرسوم والمواعيد والموقع والسعة قبل النشر.");
-    nameFields.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!program) { setAutofillNotice(en ? "Reload the course list and try again." : "أعد تحميل قائمة الدورات وحاول مجدداً."); return; }
+    const generation = ++autofillGeneration.current; setAutofilling(true); setAutofillNotice("");
+    let matching: Row[] = [], sourceFailed = false;
+    try { const query = new URLSearchParams({ collection: "cohorts", programCollection: form.programCollection, programId: form.programId }); const result = await request("/api/admin/training?" + query); matching = result.items || []; } catch { sourceFailed = true; }
+    if (generation !== autofillGeneration.current) return;
+    setAutofilling(false);
+    const latest = currentForm.current;
+    if (latest.programId !== program.id || latest.programCollection !== program.collection) return;
+    const suggestion = cohortAutofill({ ...program, collection: String(program.collection) }, [...allCohorts, ...items, ...matching], latest, Date.now(), deliveryEdited.current);
+    if (!suggestion) { setAutofillNotice(en ? "Add a title to this program first." : "أضف عنواناً للبرنامج أولاً."); return; }
+    setForm(current => ({ ...current, ...suggestion.patch })); setFieldIssues([]); setFormError(""); setFormNotice(""); setReviewedTranslations([]); setCohortReview(false);
+    const filled = suggestion.filled.map(key => cohortFieldName(key, en)).join(en ? ", " : "، ");
+    const missing = suggestion.missing.map(key => cohortFieldName(key, en)).join(en ? ", " : "، ");
+    setAutofillNotice((filled ? (en ? "Filled: " : "تمت تعبئة: ") + filled + ". " : en ? "Your entered values were kept. " : "تم الاحتفاظ بالقيم التي أدخلتها. ") + (missing ? (en ? "Not saved in this course or its cohorts — enter: " : "غير محفوظة في الدورة أو دفعاتها — أدخل: ") + missing + "." : en ? "All required fields are filled. Review them before publishing." : "جميع الحقول الإلزامية مكتملة. راجعها قبل النشر.") + (sourceFailed ? en ? " Previous cohort details could not load; retry to include them." : " تعذر تحميل بيانات الدفعات السابقة؛ أعد المحاولة لتضمينها." : ""));
   }
 
   async function save(event: React.FormEvent, publish = false) {
     event.preventDefault();
-    if (!document.querySelector<HTMLFormElement>("#cohort-editor")?.reportValidity()) return;
-    if (publish && !cohortReviewed) { setError("REVIEW_REQUIRED"); return; }
+    setFormNotice("");
+    const validation = validateCohortForm(form, en, publish);
+    if (!validation.data) { setFieldIssues(validation.issues); setFormError(en ? "Complete the highlighted fields before saving." : "أكمل الحقول الموضحة أدناه قبل الحفظ."); return; }
+    if (publish && !cohortReviewed) { setFormError(en ? "Review and confirm the cohort details before publishing." : "راجع بيانات الدفعة وأكدها قبل النشر."); return; }
     setBusy(true);
     setError("");
-    setNotice("");
+    setFormError(""); setFieldIssues([]);
     try {
       const res = await request("/api/admin/training", {
         method: "POST",
         body: JSON.stringify({
-          ...(form.id ? { id: form.id } : {}),
-          programCollection: form.programCollection,
-          programId: form.programId,
-          cohortCode: form.cohortCode,
-          titleAr: form.titleAr,
-          titleEn: form.titleEn,
-          priceMinor: Math.round(Number(form.price) * 100),
-          currency: "SAR",
-          startAt: new Date(form.start + ":00+03:00").toISOString(),
-          endAt: new Date(form.end + ":00+03:00").toISOString(),
-          timeZone: "Asia/Riyadh",
-          scheduleAr: form.scheduleAr,
-          scheduleEn: form.scheduleEn,
-          locationType: form.locationType,
-          venueAr: form.venueAr,
-          venueEn: form.venueEn,
-          capacity: Number(form.capacity),
-          status: publish ? "published" : "draft",
+          ...validation.data,
           translationReview: { reviewed: publish ? (["ar", "en"] as const).flatMap(lang => textPairs("cohorts", form, lang).filter(p => p.source.trim() && p.target.trim()).map(p => lang + ":" + p.key)) : reviewedTranslations },
-          registrationOpen: form.registrationOpen,
         }),
       });
-      setNotice(en ? "Cohort saved successfully" : "حُفظت الدفعة بنجاح");
+      setFormNotice(en ? "Cohort saved successfully" : "حُفظت الدفعة بنجاح");
       const savedCode = form.cohortCode;
       const savedProg = form.programId;
       const savedCol = form.programCollection;
@@ -148,13 +148,25 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
         ...prev,
         { id: res?.id || String(Date.now()), cohortCode: savedCode, programId: savedProg, programCollection: savedCol }
       ]);
-      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({}); setReviewedTranslations([]);
+      setForm(empty); setSavedForm(empty); setCohortReview(false); setTranslationState({}); setReviewedTranslations([]); setAutofillNotice(""); deliveryEdited.current = false;
       await load();
       request("/api/admin/training?collection=cohorts").then((r) => {
         if (Array.isArray(r.items)) setAllCohorts(r.items);
       }).catch(() => {});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "SAVE_FAILED");
+      const caught = e as Error & { details?: CohortFieldIssue[] };
+      const messages: Record<string, string> = {
+        CAPACITY_BELOW_COMMITMENTS: en ? "Capacity cannot be below the confirmed and held seats." : "لا يمكن خفض السعة عن المقاعد المؤكدة والمحجوزة مؤقتاً.",
+        COHORT_CODE_EXISTS: en ? "This cohort code already exists. Choose another code." : "رمز الدفعة مستخدم. اختر رمزاً آخر.",
+        COHORT_CODE_IMMUTABLE: en ? "The saved cohort code cannot be changed." : "لا يمكن تغيير رمز الدفعة المحفوظة.",
+        PROGRAM_NOT_PUBLISHED: en ? "Publish the selected course before saving its cohort." : "انشر الدورة المختارة قبل حفظ دفعتها.",
+        REVIEW_REQUIRED: en ? "Review both languages before publishing." : "راجع اللغتين قبل النشر.",
+        INVALID_COHORT: en ? "Review the highlighted cohort fields." : "راجع حقول الدفعة الموضحة أدناه.",
+      };
+      const code = String(caught?.message || "");
+      const message = messages[code] || (en ? "Could not save. Your edits are still here; try again." : "تعذر الحفظ. ما زالت تعديلاتك هنا؛ أعد المحاولة.");
+      const fields = caught?.details?.length ? cohortFieldIssues(caught.details, en) : code === "CAPACITY_BELOW_COMMITMENTS" ? [{ path: ["capacity"], message }] : code.startsWith("COHORT_CODE_") ? [{ path: ["cohortCode"], message }] : [];
+      setFieldIssues(fields); setFormError(message);
     } finally {
       setBusy(false);
     }
@@ -162,7 +174,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
 
   async function edit(row: Row) {
     if (JSON.stringify(form) !== JSON.stringify(savedForm) && !window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) return;
-    setBusy(true); setError("");
+    setBusy(true); setError(""); clearFormFeedback(); autofillGeneration.current++; setAutofilling(false);
     let c: PublicCohort;
     try { const result = await request("/api/admin/training?cohortId=" + encodeURIComponent(row.id)); c = result.cohort; setTranslationState(result.translationState || {}); }
     catch { setError("SERVICE_UNAVAILABLE"); setBusy(false); return; }
@@ -256,13 +268,17 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
     <label>
       {label}
       <input
+        name={name}
         type={type}
+        aria-invalid={fieldIssues.some(issue => issue.path[0] === name) || undefined}
+        aria-describedby={fieldIssues.some(issue => issue.path[0] === name) ? "cohort-error-" + name : undefined}
         required
         readOnly={name === "cohortCode" && Boolean(form.id)}
         value={String(form[name])}
         onChange={(e) => setForm((v) => ({ ...v, [name]: e.target.value }))}
         {...(type === "number" ? { min: name === "capacity" ? 1 : 1, step: name === "capacity" ? 1 : 0.01, max: name === "capacity" ? 500 : 100000 } : {})}
       />
+      {fieldIssues.filter(issue => issue.path[0] === name).map((issue, index) => <small className="field-error" id={"cohort-error-" + name} key={index}>{issue.message}</small>)}
     </label>
   );
 
@@ -493,18 +509,20 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
 
       {/* Cohort Editor Form */}
       {collection === "cohorts" && (
-        <form id="cohort-editor" className="training-form cohort-editor" onSubmit={save}>
+        <form ref={formElement} id="cohort-editor" className="training-form cohort-editor" onSubmit={save} noValidate>
           <div className="cohort-editor-heading"><PlusCircle size={22} /><h2>{form.id ? en ? "Edit cohort" : "تعديل الدفعة التدريبية" : en ? "Create new cohort" : "إضافة دفعة تدريبية جديدة"}</h2></div>
           <ContentAssistant key={form.id || "new"} collection="cohorts" value={form} baseline={savedForm} english={en} available={aiAvailable} metadata={translationState} reviewed={reviewedTranslations} onReview={setReviewedTranslations} onChange={next => { setForm(next as unknown as typeof empty); setReviewedTranslations([]); }} request={request}>
           <div className="cohort-source"><label>
               {en ? "Program" : "البرنامج الأكاديمي"}
               <select
                 ref={programPicker}
+                name="programId"
+                aria-invalid={fieldIssues.some(issue => issue.path[0] === "programId") || undefined}
                 required
                 disabled={!!form.id || catalogLoading}
                 value={form.programId ? form.programCollection + "/" + form.programId : ""}
                 onChange={(e) => {
-                  const val = e.target.value;
+                  const val = e.target.value; autofillGeneration.current++; setAutofilling(false); clearFormFeedback();
                   if (!val) {
                     setForm((v) => ({ ...v, programCollection: "programs", programId: "" }));
                     return;
@@ -522,11 +540,12 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
                 ))}
               </select>
             </label>
-            <button type="button" className="admin-secondary-button cohort-autofill" disabled={busy || catalogLoading} onClick={autoFillCohort}><Sparkles size={16} />{en ? "Auto-fill from course" : "تعبئة من الدورة"}</button></div>
-          <p className="cohort-source-hint">{en ? "Choose a course, then fill its cohort name in both languages and suggest a code." : "اختر الدورة ثم عبّئ اسم الدفعة باللغتين واقترح رمزها."}</p>
+            <button type="button" className="admin-secondary-button cohort-autofill" disabled={busy || catalogLoading || autofilling} onClick={() => void autoFillCohort()}><Sparkles size={16} />{autofilling ? en ? "Filling saved details…" : "جارٍ تعبئة البيانات المحفوظة…" : en ? "Auto-fill from course" : "تعبئة من الدورة"}</button></div>
+          <p className="cohort-source-hint">{en ? "Fill empty fields using saved course details or its latest cohort. Your entered values are kept." : "عبّئ الحقول الفارغة من بيانات الدورة المحفوظة أو أحدث دفعة لها، مع الاحتفاظ بالقيم التي أدخلتها."}</p>
+          {autofillNotice && <p role="status" className="cohort-autofill-notice">{autofillNotice}</p>}
           {catalogError && <p role="alert" className="form-error">{en ? "Some course lists could not load." : "تعذر تحميل بعض قوائم الدورات."} <button type="button" className="text-link" onClick={() => setCatalogRetry(value => value + 1)}>{en ? "Retry" : "إعادة المحاولة"}</button></p>}
           {!catalogLoading && !catalogError && !programs.length && <p className="cohort-source-hint">{en ? "Publish a program or course first to create its cohort." : "انشر برنامجاً أو دورة أولاً لتتمكن من إضافة دفعة."}</p>}
-          <div className="cohort-name-fields" ref={nameFields}>{textInput("cohortCode", en ? "Cohort code" : "رمز الدفعة")}<BilingualField fieldKey="title" label={en ? "Cohort title" : "اسم الدفعة"} required /></div>
+          <div className="cohort-name-fields" ref={nameFields}>{textInput("cohortCode", en ? "Cohort code" : "رمز الدفعة")}<BilingualField fieldKey="title" label={en ? "Cohort title" : "اسم الدفعة"} required errors={fieldIssues} /></div>
           <div className="training-input-grid">
 
             {textInput("price", en ? "Fee in SAR (e.g. 1)" : "الرسوم بالريال السعودي", "number")}
@@ -536,7 +555,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
 
             <label>
               {en ? "Delivery Mode" : "نمط التدريب"}
-              <select value={form.locationType} onChange={(e) => setForm((v) => ({ ...v, locationType: e.target.value }))}>
+              <select name="locationType" value={form.locationType} onChange={(e) => { deliveryEdited.current = true; setForm((v) => ({ ...v, locationType: e.target.value })); }}>
                 <option value="in_person">{en ? "On campus (حضوري)" : "حضوري (في المقر)"}</option>
                 <option value="remote">{en ? "Online (عن بُعد)" : "عن بُعد (عبر الإنترنت)"}</option>
               </select>
@@ -545,19 +564,20 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
 
           </div>
 
-          <div className="cohort-bilingual-fields"><BilingualField fieldKey="schedule" label={en ? "Schedule" : "الجدول"} multiline required /><BilingualField fieldKey="venue" label={en ? "Venue" : "الموقع"} required /></div></ContentAssistant>
+          <div className="cohort-bilingual-fields"><BilingualField fieldKey="schedule" label={en ? "Schedule" : "الجدول"} multiline required errors={fieldIssues} /><BilingualField fieldKey="venue" label={en ? "Venue" : "الموقع"} required errors={fieldIssues} /></div></ContentAssistant>
           {cohortReview && <section className="publish-review"><h3>{en ? "Review cohort details" : "مراجعة بيانات الدفعة"}</h3><div className="publish-language-preview"><div dir="rtl"><strong>{form.titleAr}</strong><p>{form.scheduleAr}</p><p>{form.venueAr}</p></div><div dir="ltr"><strong>{form.titleEn}</strong><p>{form.scheduleEn}</p><p>{form.venueEn}</p></div></div><p>{form.price} SAR · {form.capacity} {en ? "seats" : "مقاعد"}</p><p dir="ltr">{form.start} — {form.end} (Asia/Riyadh)</p><label className="publish-confirm"><input type="checkbox" checked={cohortReviewed} onChange={e => setCohortReviewed(e.target.checked)} />{en ? "I confirmed both languages, fee, dates, venue and capacity." : "راجعت اللغتين والرسوم والمواعيد والموقع والسعة."}</label><button type="button" className="button button--primary" disabled={busy || !cohortReviewed} onClick={e => void save(e, true)}>{en ? "Publish reviewed cohort" : "نشر الدفعة المراجعة"}</button></section>}
           <label className="training-consent" style={{ marginTop: "12px" }}>
             <input type="checkbox" checked={form.registrationOpen} onChange={(e) => setForm((v) => ({ ...v, registrationOpen: e.target.checked }))} />
             <span>{en ? "Allow online registration (Open for booking)" : "تفعيل وإتاحة الحجز الإلكتروني فوراً (فتح التسجيل)"}</span>
           </label>
 
+          <div ref={feedback} tabIndex={-1} className="cohort-save-feedback" aria-live="polite">{formError && <div className="training-alert" role="alert"><strong>{formError}</strong>{fieldIssues.length > 0 && <ul>{fieldIssues.map((issue, index) => <li key={index}><button type="button" className="text-link" onClick={() => focusField(String(issue.path[0]))}>{issue.message}</button></li>)}</ul>}</div>}{formNotice && <p role="status" className="admin-success">{formNotice}</p>}</div>
           <div className="button-row">
             <button className="button button--primary" disabled={busy}>
               {en ? "Save draft" : "حفظ مسودة"}
             </button>
             <button type="button" className="btn-export" onClick={() => setCohortReview(v => !v)}>{en ? "Preview / Review & publish" : "معاينة / مراجعة ونشر"}</button>
-            <button type="button" className="btn-export" onClick={() => { if (JSON.stringify(form) === JSON.stringify(savedForm) || window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) { setForm(empty); setSavedForm(empty); setCohortReview(false); } }}>
+            <button type="button" className="btn-export" onClick={() => { if (JSON.stringify(form) === JSON.stringify(savedForm) || window.confirm(en ? "Discard unsaved changes?" : "تجاهل التعديلات غير المحفوظة؟")) { setForm(empty); setSavedForm(empty); setCohortReview(false); clearFormFeedback(); deliveryEdited.current = false; autofillGeneration.current++; setAutofilling(false); } }}>
               {en ? "Clear" : "إلغاء"}
             </button>
           </div>

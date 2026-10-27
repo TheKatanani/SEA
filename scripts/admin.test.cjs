@@ -147,3 +147,65 @@ test("training program picker sees the published record when editing drafts exis
   assert.equal(editor.items.find(item => item.id === "live").locales.en.title, "Private draft");
   assert.equal((await admin.GET(request("/api/admin/data?collection=courses&view=published", null, "admissions"))).status, 403);
 });
+
+test("expanded autofill reuses matching cohort details and exact future dates", () => {
+  const { cohortAutofill } = load("lib/admin/cohort-autofill.ts");
+  const current = { id:"", programCollection:"courses", programId:"course-crowd", cohortCode:"",titleAr:"",titleEn:"",price:"",capacity:"",start:"",end:"",scheduleAr:"",scheduleEn:"",venueAr:"",venueEn:"",locationType:"in_person",status:"draft",registrationOpen:false };
+  const program = { id:"course-crowd",collection:"courses",price:60,locales:{ ar:{title:"إدارة الحشود",hoursAndSchedule:"الأحد من التاسعة صباحاً"},en:{title:"Crowd management",hoursAndSchedule:"Sunday from 9 am"} } };
+  const cohort = { id:"old",programCollection:"courses",programId:"course-crowd",cohortCode:"CRO-01",priceMinor:5000,capacity:45,startAt:"2026-11-01T06:00:00Z",endAt:"2026-11-01T12:00:00Z",scheduleAr:"جدول قديم",scheduleEn:"Previous schedule",venueAr:"مقر الرياض",venueEn:"Riyadh campus",locationType:"in_person",createdAt:100 };
+  const result = cohortAutofill(program,[cohort],current,Date.parse("2026-10-27T00:00:00Z"));
+  assert.equal(result.patch.price,"60"); assert.equal(result.patch.capacity,"45"); assert.equal(result.patch.start,"2026-11-01T09:00"); assert.equal(result.patch.end,"2026-11-01T15:00");
+  assert.equal(result.patch.scheduleAr,program.locales.ar.hoursAndSchedule); assert.equal(result.patch.scheduleEn,program.locales.en.hoursAndSchedule); assert.equal(result.patch.venueEn,"Riyadh campus"); assert.deepEqual(result.missing,[]);
+  assert.ok(!("status" in result.patch)); assert.ok(!("registrationOpen" in result.patch)); assert.ok(!("id" in result.patch));
+  const entered={...current,price:"75",capacity:"40",start:"2026-12-01T09:00",end:"2026-12-01T13:00",venueAr:"موقع مخصص",venueEn:"Custom venue",locationType:"remote"};
+  const kept=cohortAutofill(program,[cohort],entered,Date.parse("2026-10-27T00:00:00Z"),true);
+  for(const key of ["price","capacity","start","end","venueAr","venueEn","locationType"])assert.ok(!(key in kept.patch),key);
+});
+test("autofill reports missing source fields and never reuses past cohort dates", () => {
+  const { cohortAutofill } = load("lib/admin/cohort-autofill.ts");
+  const current={ id:"",programCollection:"courses",programId:"one",cohortCode:"",titleAr:"",titleEn:"",price:"",capacity:"",start:"",end:"",scheduleAr:"",scheduleEn:"",venueAr:"",venueEn:"",locationType:"in_person",status:"draft",registrationOpen:false };
+  const program={id:"one",collection:"courses",locales:{ar:{title:"دورة محلية"},en:{title:"Local course"}}};
+  const result=cohortAutofill(program,[],current,Date.parse("2026-10-27T00:00:00Z"));
+  for(const key of ["price","capacity","start","end","scheduleAr","scheduleEn","venueAr","venueEn"])assert.ok(result.missing.includes(key),key);
+  const dateOnly=cohortAutofill({...program,startDate:"2026-11-01",endDate:"2026-11-02"},[],current,Date.parse("2026-10-27T00:00:00Z")); assert.equal(dateOnly.patch.start,undefined);
+  const unrelated={id:"other",programCollection:"programs",programId:"one",venueEn:"Wrong venue",capacity:20};
+  const past={id:"past",programCollection:"courses",programId:"one",startAt:"2026-01-01T06:00:00Z",endAt:"2026-01-01T09:00:00Z"};
+  const old=cohortAutofill(program,[unrelated,past],current,Date.parse("2026-10-27T00:00:00Z"));
+  assert.equal(old.patch.start,undefined); assert.equal(old.patch.venueEn,undefined);
+});
+test("cohort validation identifies missing bilingual fields before an API request and maps dates safely", () => {
+  const { validateCohortForm,cohortFieldIssues }=load("lib/admin/cohort-form.ts");
+  const blank={ id:"",programCollection:"courses",programId:"one",cohortCode:"CRO-01",titleAr:"دورة جديدة",titleEn:"New cohort",price:"60",capacity:"45",start:"2026-11-01T09:00",end:"2026-11-01T15:00",scheduleAr:"",scheduleEn:"",venueAr:"",venueEn:"",locationType:"in_person",status:"draft",registrationOpen:false };
+  const invalid=validateCohortForm(blank,true);
+  assert.equal(invalid.data,undefined); assert.deepEqual(invalid.issues.map(issue=>issue.path[0]),["scheduleAr","scheduleEn","venueAr","venueEn"]); assert.ok(invalid.issues.some(issue=>issue.message.includes("English venue")));
+  const full={...blank,scheduleAr:"جدول تدريب صباحي",scheduleEn:"Morning training",venueAr:"مقر الرياض",venueEn:"Riyadh campus"};
+  const valid=validateCohortForm(full,true); assert.equal(valid.issues.length,0); assert.equal(valid.data.priceMinor,6000); assert.equal(valid.data.startAt,"2026-11-01T06:00:00.000Z"); assert.equal(valid.data.status,"draft");
+  assert.ok(validateCohortForm({...full,start:"bad"},false).issues.some(issue=>issue.path[0]==="start"));
+  assert.ok(validateCohortForm({...full,end:"2026-10-01T15:00"},true).issues.some(issue=>issue.message.includes("after the start")));
+  assert.equal(cohortFieldIssues([{path:["priceMinor"],message:"Invalid"}],true)[0].path[0],"price");
+});
+test("cohort template queries match both course collection and ID", async () => {
+  reset(); rows.set("cohorts/match",{programCollection:"courses",programId:"one",createdAt:2}); rows.set("cohorts/wrong",{programCollection:"programs",programId:"one",createdAt:3}); rows.set("cohorts/other",{programCollection:"courses",programId:"two",createdAt:4});
+  const { trainingQuery }=load("lib/booking/admin-query.ts");
+  const {query}=trainingQuery(request("/api/admin/training?collection=cohorts&programCollection=courses&programId=one"));
+  assert.deepEqual((await query.get()).docs.map(doc=>doc.id),["match"]);
+  assert.throws(()=>trainingQuery(request("/api/admin/training?collection=cohorts&programCollection=bookings&programId=one")));
+});
+
+test("admin language links preserve the selected area, tab, record and fragment", () => {
+  const { adminLanguageHref } = load("lib/admin/navigation.ts");
+  const href = adminLanguageHref("?area=training&tab=cohorts&item=CRO-02&query=visitor+safety", "#cohort-editor");
+  const parsed = new URL(href, "https://example.invalid");
+  assert.equal(parsed.pathname, "/admin");
+  assert.equal(parsed.searchParams.get("area"), "training"); assert.equal(parsed.searchParams.get("tab"), "cohorts");
+  assert.equal(parsed.searchParams.get("item"), "CRO-02"); assert.equal(parsed.searchParams.get("query"), "visitor safety"); assert.equal(parsed.hash, "#cohort-editor");
+  assert.equal(adminLanguageHref(""), "/admin"); assert.equal(adminLanguageHref("?tab=pages", "details"), "/admin?tab=pages#details");
+});
+test("admin language toggle has accessible actions for both interface languages", () => {
+  const React = require("react"), { renderToStaticMarkup } = require("react-dom/server");
+  const { AdminLanguageToggle } = load("components/AdminLanguageToggle.tsx");
+  const english = renderToStaticMarkup(React.createElement(AdminLanguageToggle, { english:true, onSwitch(){} }));
+  const arabic = renderToStaticMarkup(React.createElement(AdminLanguageToggle, { english:false, onSwitch(){} }));
+  assert.match(english,/type="button"/); assert.ok(english.includes('aria-label="Switch dashboard to Arabic"')); assert.ok(english.includes('lang="ar">العربية'));
+  assert.ok(arabic.includes('lang="en">English')); assert.ok(arabic.includes("تغيير لغة لوحة الإدارة إلى الإنجليزية"));
+});

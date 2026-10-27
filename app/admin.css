@@ -1442,3 +1442,21 @@ fieldset.content-editing-layout { border: 0; margin: 0; min-width: 0; }
 .cohort-source-hint { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .cohort-name-fields { display: grid; gap: 16px; margin: 20px 0; scroll-margin-top: 90px; }
 @media (max-width: 600px) { .cohort-source { grid-template-columns: minmax(0, 1fr); } .cohort-source .cohort-autofill { justify-self: start; } .admin-console .admin-topbar { min-height: 76px; padding: 12px; } .admin-console .admin-topbar p { display: none; } }
+
+.cohort-autofill-notice { padding: 12px 14px; border: 1px solid #c8dfe3; border-radius: 10px; background: #f2f8f9; color: #325d69; font-size: 12px; line-height: 1.8; }
+.cohort-save-feedback { scroll-margin-block: 100px; }
+.cohort-save-feedback:empty { display: none; }
+.cohort-save-feedback .training-alert { margin: 0; }
+.cohort-save-feedback .training-alert strong { font-size: 13px; }
+.cohort-save-feedback ul { margin: 9px 0 0; padding-inline-start: 20px; }
+.cohort-save-feedback li + li { margin-top: 5px; }
+.cohort-save-feedback .text-link { border: 0; padding: 0; background: transparent; color: inherit; text-align: start; font-size: 12px; line-height: 1.6; text-decoration: underline; cursor: pointer; }
+.cohort-save-feedback .admin-success { margin: 0; }
+
+.admin-language-toggle { white-space: nowrap; flex-shrink: 0; }
+.admin-login__language { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+.admin-console .admin-topbar__actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .admin-console .admin-topbar { flex-wrap: wrap; gap: 10px; }
+  .admin-console .admin-topbar__actions { margin-inline-start: auto; }
+}

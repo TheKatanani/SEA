@@ -17,7 +17,11 @@ export function trainingQuery(request: NextRequest) {
     if (collection !== "bookings") throw new BookingError("SEARCH_BOOKINGS_ONLY", 400);
     query = query.where("searchTokens", "array-contains", search.slice(0, 100));
   }
+  if (collection === "cohorts" && request.nextUrl.searchParams.has("programId")) {
+    const programCollection = request.nextUrl.searchParams.get("programCollection");
+    if (!["programs", "courses"].includes(programCollection || "")) throw new BookingError("INVALID_QUERY", 400);
+    query = query.where("programCollection", "==", programCollection).where("programId", "==", idSchema.parse(request.nextUrl.searchParams.get("programId")));
+  }
   const rawQuery = query;
   return { collection, rawQuery, query: query.orderBy(collection === "payments" ? "updatedAt" : "createdAt", "desc") };
 }
-
