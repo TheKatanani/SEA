@@ -1350,7 +1350,7 @@ fieldset.content-editing-layout { border: 0; margin: 0; min-width: 0; }
 .admin-data-heading h3 span { padding: 3px 9px; border-radius: 18px; background: #eaf3f3; color: #17616b; font-size: 12px; }
 .admin-data-filters { display: flex; flex-wrap: wrap; gap: 10px; }
 .admin-search { display: flex; align-items: center; gap: 8px; padding-inline: 10px; border: 1px solid #cbd9dd; border-radius: 9px; }
-.admin-console .admin-search input { min-width: 0; width: 200px; border: 0; padding: 8px 0; background: transparent; font: inherit; font-size: 13px; }
+.admin-shell.admin-console .admin-search input[type="search"] { min-width: 0; width: 200px; border: 0; padding: 8px 0; background: transparent; font: inherit; font-size: 13px; }
 .admin-data-filters select { border: 1px solid #cbd9dd; border-radius: 9px; padding: 8px; background: #fff; font: inherit; font-size: 12px; }
 .admin-data-scroll { overflow-x: auto; }
 .admin-data-table { width: 100%; min-width: 720px; border-collapse: collapse; text-align: start; font-size: 12px; }
@@ -1422,3 +1422,23 @@ fieldset.content-editing-layout { border: 0; margin: 0; min-width: 0; }
 .overview-card { text-align: start; cursor: pointer; }
 .overview-card:hover { border-color: #9cc5cb; background: #f7fbfb; }
 .overview-recent { margin-top: 22px; }
+
+/* Compact workspace header and a single search control outline. */
+.admin-console .admin-topbar { min-height: 88px; padding: 16px 20px; }
+.admin-console .admin-topbar__brand { min-width: 0; gap: 12px; }
+.admin-console .admin-topbar h1 { margin: 0; font-size: clamp(19px, 2vw, 25px); line-height: 1.25; letter-spacing: -.025em; }
+.admin-console .admin-topbar p { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.admin-console .admin-topbar > button { flex: 0 0 auto; }
+.admin-console .admin-search { min-height: 40px; padding-inline: 12px; border: 1px solid #cbd9dd; background: #fff; }
+.admin-console .admin-search > svg { flex: 0 0 auto; color: #617483; }
+.admin-shell.admin-console .admin-search input[type="search"] { min-height: 38px; border: 0; border-radius: 0; box-shadow: none; outline: none; padding: 8px 0; }
+.admin-console .admin-search:focus-within { border-color: #087180; outline: 3px solid #8cc8d155; outline-offset: 1px; }
+.admin-shell.admin-console .admin-search input[type="search"]:focus-visible { outline: none; }
+.cohort-editor-heading { display: flex; align-items: center; gap: 10px; }
+.cohort-editor-heading > svg { flex: 0 0 auto; color: #087180; }
+.admin-console .cohort-editor-heading h2 { margin: 0; font-size: 21px; line-height: 1.35; }
+.cohort-source { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; margin-top: 16px; }
+.cohort-source .cohort-autofill { min-height: 46px; color: #07616c; border-color: #b5d4d6; background: #f2f8f8; }
+.cohort-source-hint { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.cohort-name-fields { display: grid; gap: 16px; margin: 20px 0; scroll-margin-top: 90px; }
+@media (max-width: 600px) { .cohort-source { grid-template-columns: minmax(0, 1fr); } .cohort-source .cohort-autofill { justify-self: start; } .admin-console .admin-topbar { min-height: 76px; padding: 12px; } .admin-console .admin-topbar p { display: none; } }

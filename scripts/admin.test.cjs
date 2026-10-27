@@ -112,3 +112,38 @@ test("blank nested bilingual fields support drafting without allowing structural
   const pairs = editableTextPairs("pages", record, "ar", ["sections.0.heading", "sections.0.buttonUrl"]); assert.ok(pairs.some(pair => pair.key === "sections.0.heading" && pair.source === "")); assert.ok(!pairs.some(pair => pair.key === "sections.0.buttonUrl"));
   const batch = assistanceBatch(pairs, ["sections.0.heading"], "draft", "Use the supplied facts"); assert.equal(batch.length, 1); assert.ok(suggestionIsCurrent({ key: "sections.0.heading", sourceText: "", sourceHash: content.textHash("") }, pairs));
 });
+
+test("cohort autofill deduplicates loaded cohorts and fills both names without operational defaults", () => {
+  const { cohortSuggestion } = load("lib/admin/cohort-autofill.ts");
+  const program = { id: "course-crowd", collection: "courses", locales: { ar: { title: "إدارة الحشود" }, en: { title: "Crowd management" } } };
+  const first = { id: "one", programCollection: "courses", programId: program.id, cohortCode: "CRO-01" };
+  const result = cohortSuggestion(program, [first, first]);
+  assert.equal(result.cohortCode, "CRO-02"); assert.equal(result.titleAr, "الدفعة الثانية - إدارة الحشود"); assert.equal(result.titleEn, "Cohort 2 - Crowd management");
+  assert.deepEqual(Object.keys(result).sort(), ["programCollection", "programId", "cohortCode", "titleAr", "titleEn"].sort());
+});
+test("cohort autofill avoids code collisions and retains existing cohort codes", () => {
+  const { cohortSuggestion } = load("lib/admin/cohort-autofill.ts");
+  const program = { id: "course-crowd", collection: "courses", locales: { en: { title: "Crowd management" } } };
+  const cohorts = [{ id: "other", programCollection: "programs", programId: "other", cohortCode: "cro-05" }];
+  assert.equal(cohortSuggestion(program, cohorts).cohortCode, "CRO-06");
+  const existing = cohortSuggestion(program, cohorts, { id: "saved", cohortCode: "CRO-02" });
+  assert.equal(existing.cohortCode, "CRO-02"); assert.match(existing.titleEn, /^Cohort 2 /);
+  assert.equal(cohortSuggestion({ id: "blank", collection: "courses" }, []), null);
+});
+test("cohort numbering distinguishes courses from programs with the same ID", () => {
+  const { cohortSuggestion } = load("lib/admin/cohort-autofill.ts");
+  const program = { id: "shared", collection: "courses", title: "Course" };
+  const cohorts = [{ id: "other", programCollection: "programs", programId: "shared", cohortCode: "OTH-01" }];
+  assert.equal(cohortSuggestion(program, cohorts).cohortCode, "SHA-01");
+});
+test("training program picker sees the published record when editing drafts exist", async () => {
+  reset();
+  rows.set("courses/live", { status: "published", locales: { ar: { title: "برنامج منشور" }, en: { title: "Published course" } } });
+  rows.set("content_drafts/courses__live", { data: { status: "draft", locales: { ar: { title: "مسودة خاصة" }, en: { title: "Private draft" } } } });
+  rows.set("courses/unpublished", { status: "draft", locales: { en: { title: "Unpublished course" } } });
+  const picker = await (await admin.GET(request("/api/admin/data?collection=courses&view=published", null, "admin"))).json();
+  assert.equal(picker.items.length, 1); assert.equal(picker.items[0].locales.en.title, "Published course"); assert.equal(picker.items[0].hasDraft, false);
+  const editor = await (await admin.GET(request("/api/admin/data?collection=courses", null, "editor"))).json();
+  assert.equal(editor.items.find(item => item.id === "live").locales.en.title, "Private draft");
+  assert.equal((await admin.GET(request("/api/admin/data?collection=courses&view=published", null, "admissions"))).status, 403);
+});

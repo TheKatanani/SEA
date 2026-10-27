@@ -50,10 +50,12 @@ export async function GET(request: NextRequest) {
       const [record, draft, translation] = await Promise.all([reference.doc(recordId).get(), getAdminDb().collection("content_drafts").doc(collection + "__" + recordId).get(), getAdminDb().collection("content_translation_state").doc(collection + "__" + recordId).get()]);
       return Response.json({ items: record.exists ? [{ ...serialize(draft.exists ? draft.data()?.data : record.data()) as object, id: recordId, hasDraft: draft.exists }] : [], translationState: translation.data()?.fields || {} }, { headers: { "Cache-Control": "private, no-store" } });
     }
-    const snapshot = ["applications", "employer_inquiries", "contact_inquiries"].includes(collection)
+    // Training selectors use live records, even when a newer editing draft exists.
+    const publishedView = request.nextUrl.searchParams.get("view") === "published" && ["programs", "courses"].includes(collection);
+    const snapshot = publishedView ? await reference.where("status", "==", "published").limit(100).get() : ["applications", "employer_inquiries", "contact_inquiries"].includes(collection)
       ? await reference.orderBy("createdAt", "desc").limit(100).get()
       : collection === "audit_logs" ? await reference.orderBy("at", "desc").limit(100).get() : await reference.limit(100).get();
-    const drafts = !submissionCollections.has(collection) && collection !== "audit_logs" && snapshot.size ? await getAdminDb().getAll(...snapshot.docs.map((doc) => getAdminDb().collection("content_drafts").doc(collection + "__" + doc.id))) : [];
+    const drafts = !publishedView && !submissionCollections.has(collection) && collection !== "audit_logs" && snapshot.size ? await getAdminDb().getAll(...snapshot.docs.map((doc) => getAdminDb().collection("content_drafts").doc(collection + "__" + doc.id))) : [];
     return Response.json({ items: snapshot.docs.map((doc, index) => ({ ...serialize(drafts[index]?.exists ? drafts[index].data()?.data : doc.data()) as object, id: doc.id, hasDraft: drafts[index]?.exists || false })) }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return authErrorResponse(error);

@@ -1,7 +1,8 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { Layers, Users, CreditCard, CheckCircle2, Clock, FileSpreadsheet, FileText, AlertCircle, RefreshCw, XCircle, Search, PlusCircle, Check, Sparkles } from "lucide-react";
+import { cohortSuggestion } from "@/lib/admin/cohort-autofill";
 import type { PublicCohort } from "./CohortOptions";
 import { ContentAssistant, BilingualField } from "./ContentAssistant";
 import { textPairs, type ContentRecord, type TranslationState } from "@/lib/admin/content";
@@ -14,6 +15,8 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   const collection = activeTab;
   const [items, setItems] = useState<Row[]>([]);
   const [programs, setPrograms] = useState<Row[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true), [catalogError, setCatalogError] = useState(false), [catalogRetry, setCatalogRetry] = useState(0);
+  const programPicker = useRef<HTMLSelectElement>(null), nameFields = useRef<HTMLDivElement>(null);
   const [allCohorts, setAllCohorts] = useState<Row[]>([]);
   const [form, setForm] = useState(empty);
   const [savedForm, setSavedForm] = useState(empty);
@@ -80,93 +83,28 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
   }, [load]);
 
   useEffect(() => {
-    Promise.all(
-      ["programs", "courses"].map(async (c) => {
-        const r = await request("/api/admin/data?collection=" + c);
-        return (r.items as Row[]).filter((p) => p.status === "published").map((p) => ({ ...p, collection: c }));
-      })
-    )
-      .then((groups) => setPrograms(groups.flat()))
-      .catch(() => {});
-    request("/api/admin/training?collection=cohorts")
-      .then((r) => {
-        if (Array.isArray(r.items)) setAllCohorts(r.items);
-      })
-      .catch(() => {});
-  }, [request]);
+    let active = true; setCatalogLoading(true); setCatalogError(false);
+    Promise.allSettled(["programs", "courses"].map(async collection => {
+      const result = await request("/api/admin/data?collection=" + collection + "&view=published");
+      return (result.items as Row[]).filter(program => program.status === "published").map(program => ({ ...program, collection }));
+    })).then(groups => {
+      if (!active) return;
+      setPrograms(groups.flatMap(group => group.status === "fulfilled" ? group.value : []));
+      setCatalogError(groups.some(group => group.status === "rejected")); setCatalogLoading(false);
+    });
+    request("/api/admin/training?collection=cohorts").then(result => { if (active && Array.isArray(result.items)) setAllCohorts(result.items); }).catch(() => {});
+    return () => { active = false; };
+  }, [request, catalogRetry]);
 
-  function autoFillCohort(programCollection: string, programId: string) {
-    if (!programId) return;
-    const program = programs.find((p) => p.collection === programCollection && p.id === programId);
-    if (!program) return;
-
-    const locales = program.locales as Record<string, { title?: string }> | undefined;
-    const programTitleAr = locales?.ar?.title || String(program.title || program.id);
-    const programTitleEn = locales?.en?.title || String(program.name || program.title || program.id);
-
-    // Combine all known existing cohorts across both allCohorts state and items list
-    const combined = [
-      ...allCohorts,
-      ...(collection === "cohorts" ? items : []),
-    ];
-
-    // Build set of all taken cohort codes (uppercase)
-    const takenCodes = new Set(
-      combined
-        .map((c) => String(c.cohortCode || "").trim().toUpperCase())
-        .filter(Boolean)
-    );
-
-    // Filter existing cohorts for this specific program
-    const forThisProgram = combined.filter(
-      (c) => String(c.programId) === programId || (c.programCollection === programCollection && String(c.programId) === programId)
-    );
-
-    // Derive concise cohort code prefix (e.g. course-crowd -> CRD, course-events -> EVT)
-    const baseCode = programId.replace(/^(course|program)-/, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-    const prefix = baseCode.slice(0, 3) || "SEA";
-
-    // Find highest cohort number used for this program or prefix
-    let maxNum = forThisProgram.length;
-    for (const c of combined) {
-      const code = String(c.cohortCode || "").toUpperCase();
-      if (code.startsWith(prefix)) {
-        const matches = code.match(/\d+/g);
-        if (matches) {
-          const num = parseInt(matches[matches.length - 1], 10);
-          if (!isNaN(num) && num > maxNum) maxNum = num;
-        }
-      }
-    }
-
-    // Determine candidate number, ensuring no collision with existing codes
-    let candidateNum = maxNum + 1;
-    let candidateCode = candidateNum < 10 ? `${prefix}-0${candidateNum}` : `${prefix}-${candidateNum}`;
-    while (takenCodes.has(candidateCode) || takenCodes.has(`${candidateCode}-01`)) {
-      candidateNum++;
-      candidateCode = candidateNum < 10 ? `${prefix}-0${candidateNum}` : `${prefix}-${candidateNum}`;
-    }
-
-    const arabicOrdinals = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة", "السابعة", "الثامنة", "التاسعة", "العاشرة", "الحادية عشرة", "الثانية عشرة"];
-    const ordinalAr = arabicOrdinals[candidateNum - 1] || `رقم ${candidateNum}`;
-
-    setForm((current) => ({
-      ...current,
-      id: current.id || "",
-      programCollection,
-      programId,
-      cohortCode: current.cohortCode && current.id ? current.cohortCode : candidateCode,
-      titleAr: `الدفعة ${ordinalAr} - ${programTitleAr}`,
-      titleEn: `Cohort ${candidateNum} - ${programTitleEn}`,
-      status: current.id ? current.status : "draft",
-      registrationOpen: current.id ? current.registrationOpen : false,
-    }));
-
-    setNotice(
-      en
-        ? `✨ Auto-filled data for "${programTitleEn}" (Code: ${candidateCode}). You can edit any field before saving.`
-        : `✨ تم تعبئة البيانات المقترحة تلقائياً لـ "${programTitleAr}" (الرمز: ${candidateCode}). يمكنك تعديل أي حقل قبل الحفظ.`
-    );
+  function autoFillCohort() {
+    if (!form.programId) { setNotice(en ? "Choose a program or course below first." : "اختر البرنامج أو الدورة أدناه أولاً."); programPicker.current?.focus(); return; }
+    const program = programs.find(item => item.collection === form.programCollection && item.id === form.programId);
+    if (!program) { setNotice(en ? "The selected program is unavailable. Reload the course list and try again." : "البرنامج المختار غير متاح. أعد تحميل قائمة الدورات وحاول مجدداً."); return; }
+    const suggestion = cohortSuggestion({ ...program, collection: String(program.collection) }, [...allCohorts, ...items], form);
+    if (!suggestion) { setNotice(en ? "Add a title to this program before using autofill." : "أضف عنواناً للبرنامج أولاً حتى تعمل التعبئة التلقائية."); return; }
+    setForm(current => ({ ...current, ...suggestion })); setReviewedTranslations([]); setCohortReview(false);
+    setNotice(en ? "Cohort names and code filled. Confirm the fee, dates, venue and capacity before publishing." : "تمت تعبئة اسم الدفعة باللغتين ورمزها. أكد الرسوم والمواعيد والموقع والسعة قبل النشر.");
+    nameFields.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function save(event: React.FormEvent, publish = false) {
@@ -556,30 +494,14 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
       {/* Cohort Editor Form */}
       {collection === "cohorts" && (
         <form id="cohort-editor" className="training-form cohort-editor" onSubmit={save}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <PlusCircle size={22} style={{ color: "var(--sea-primary)" }} />
-              <h2 style={{ margin: "0" }}>{form.id ? (en ? "Edit Cohort" : "تعديل الدفعة التدريبية") : en ? "Create New Cohort" : "إضافة دفعة تدريبية جديدة"}</h2>
-            </div>
-            <button
-              type="button"
-              className="btn-autofill"
-              disabled={!form.programId}
-              onClick={() => autoFillCohort(form.programCollection, form.programId)}
-              title={en ? "Auto-fill suggested data for the selected course" : "تعبئة مقترحة لبيانات الدفعة استناداً إلى الدورة المختارة"}
-            >
-              <Sparkles size={16} />
-              {en ? "Auto-fill from Course" : "تعبئة تلقائية ذكية (حسب الدورة)"}
-            </button>
-          </div>
-
+          <div className="cohort-editor-heading"><PlusCircle size={22} /><h2>{form.id ? en ? "Edit cohort" : "تعديل الدفعة التدريبية" : en ? "Create new cohort" : "إضافة دفعة تدريبية جديدة"}</h2></div>
           <ContentAssistant key={form.id || "new"} collection="cohorts" value={form} baseline={savedForm} english={en} available={aiAvailable} metadata={translationState} reviewed={reviewedTranslations} onReview={setReviewedTranslations} onChange={next => { setForm(next as unknown as typeof empty); setReviewedTranslations([]); }} request={request}>
-          <div className="training-input-grid">
-            <label>
+          <div className="cohort-source"><label>
               {en ? "Program" : "البرنامج الأكاديمي"}
               <select
+                ref={programPicker}
                 required
-                disabled={!!form.id}
+                disabled={!!form.id || catalogLoading}
                 value={form.programId ? form.programCollection + "/" + form.programId : ""}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -589,20 +511,23 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
                   }
                   const [programCollection, programId] = val.split("/");
                   setForm((v) => ({ ...v, programCollection, programId }));
-                  if (!form.id) {
-                    autoFillCohort(programCollection, programId);
-                  }
+                  setNotice("");
                 }}
               >
-                <option value="">{en ? "Choose published program" : "اختر برنامجاً منشوراً"}</option>
+                <option value="">{catalogLoading ? en ? "Loading programs and courses…" : "جارٍ تحميل البرامج والدورات…" : en ? "Choose a published program or course" : "اختر برنامجاً أو دورة منشورة"}</option>
                 {programs.map((p) => (
                   <option key={String(p.collection) + "/" + p.id} value={String(p.collection) + "/" + p.id}>
-                    {String((p.locales as Record<string, { title: string }>)?.[en ? "en" : "ar"]?.title || p.id)}
+                    {String((p.locales as Record<string, { title: string }>)?.[en ? "en" : "ar"]?.title || (p.locales as Record<string, { title?: string }>)?.[en ? "ar" : "en"]?.title || (en ? "Untitled program" : "برنامج بلا عنوان"))}
                   </option>
                 ))}
               </select>
             </label>
-            {textInput("cohortCode", en ? "Cohort Code (e.g. CRD-01)" : "رمز الدفعة (مثال: CRD-01)")}
+            <button type="button" className="admin-secondary-button cohort-autofill" disabled={busy || catalogLoading} onClick={autoFillCohort}><Sparkles size={16} />{en ? "Auto-fill from course" : "تعبئة من الدورة"}</button></div>
+          <p className="cohort-source-hint">{en ? "Choose a course, then fill its cohort name in both languages and suggest a code." : "اختر الدورة ثم عبّئ اسم الدفعة باللغتين واقترح رمزها."}</p>
+          {catalogError && <p role="alert" className="form-error">{en ? "Some course lists could not load." : "تعذر تحميل بعض قوائم الدورات."} <button type="button" className="text-link" onClick={() => setCatalogRetry(value => value + 1)}>{en ? "Retry" : "إعادة المحاولة"}</button></p>}
+          {!catalogLoading && !catalogError && !programs.length && <p className="cohort-source-hint">{en ? "Publish a program or course first to create its cohort." : "انشر برنامجاً أو دورة أولاً لتتمكن من إضافة دفعة."}</p>}
+          <div className="cohort-name-fields" ref={nameFields}>{textInput("cohortCode", en ? "Cohort code" : "رمز الدفعة")}<BilingualField fieldKey="title" label={en ? "Cohort title" : "اسم الدفعة"} required /></div>
+          <div className="training-input-grid">
 
             {textInput("price", en ? "Fee in SAR (e.g. 1)" : "الرسوم بالريال السعودي", "number")}
             {textInput("capacity", en ? "Capacity (e.g. 25)" : "السعة القصوى للمقاعد", "number")}
@@ -620,7 +545,7 @@ export function TrainingAdmin({ user, english: en, activeTab = "cohorts", onDirt
 
           </div>
 
-          <div className="cohort-bilingual-fields"><BilingualField fieldKey="title" label={en ? "Cohort title" : "اسم الدفعة"} required /><BilingualField fieldKey="schedule" label={en ? "Schedule" : "الجدول"} multiline required /><BilingualField fieldKey="venue" label={en ? "Venue" : "الموقع"} required /></div></ContentAssistant>
+          <div className="cohort-bilingual-fields"><BilingualField fieldKey="schedule" label={en ? "Schedule" : "الجدول"} multiline required /><BilingualField fieldKey="venue" label={en ? "Venue" : "الموقع"} required /></div></ContentAssistant>
           {cohortReview && <section className="publish-review"><h3>{en ? "Review cohort details" : "مراجعة بيانات الدفعة"}</h3><div className="publish-language-preview"><div dir="rtl"><strong>{form.titleAr}</strong><p>{form.scheduleAr}</p><p>{form.venueAr}</p></div><div dir="ltr"><strong>{form.titleEn}</strong><p>{form.scheduleEn}</p><p>{form.venueEn}</p></div></div><p>{form.price} SAR · {form.capacity} {en ? "seats" : "مقاعد"}</p><p dir="ltr">{form.start} — {form.end} (Asia/Riyadh)</p><label className="publish-confirm"><input type="checkbox" checked={cohortReviewed} onChange={e => setCohortReviewed(e.target.checked)} />{en ? "I confirmed both languages, fee, dates, venue and capacity." : "راجعت اللغتين والرسوم والمواعيد والموقع والسعة."}</label><button type="button" className="button button--primary" disabled={busy || !cohortReviewed} onClick={e => void save(e, true)}>{en ? "Publish reviewed cohort" : "نشر الدفعة المراجعة"}</button></section>}
           <label className="training-consent" style={{ marginTop: "12px" }}>
             <input type="checkbox" checked={form.registrationOpen} onChange={(e) => setForm((v) => ({ ...v, registrationOpen: e.target.checked }))} />
